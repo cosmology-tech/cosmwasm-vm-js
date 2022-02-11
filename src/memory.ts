@@ -1,3 +1,4 @@
+import { TextEncoder, TextDecoder } from 'util';
 /**
  * Wrapper class for the Region data structure, which describes a region of
  * WebAssembly's linear memory that has been allocated by the VM.
@@ -59,6 +60,13 @@ export class Region {
   }
 
   /**
+   * Get a base64-encoded string of the region's data.
+   */
+  public get b64(): string {
+    return this.read_b64();
+  }
+
+  /**
    * Get a string view of the region's data.
    */
   public get str(): string {
@@ -79,6 +87,14 @@ export class Region {
   public write(bytes: Uint8Array): void {
     this.slice.set(bytes);
     this.length = bytes.length;
+  }
+
+  /**
+   * Write bytes encoded as base64 to the region.
+   * @param b64 bytes encoded as base64
+   */
+  public write_b64(b64: string): void {
+    this.write(Buffer.from(b64, 'base64'));
   }
 
   /**
@@ -103,6 +119,10 @@ export class Region {
    */
   public read(): Uint8Array {
     return new Uint8Array(this.memory.buffer, this.offset, this.length);
+  }
+
+  public read_b64(): string {
+    return Buffer.from(this.read()).toString('base64');
   }
 
   /**

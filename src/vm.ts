@@ -1,9 +1,15 @@
-import { Region } from "./memory";
+import { Region } from './memory';
+import { KVStore } from './store';
 
 export class CosmWasmVM {
   public instance: WebAssembly.Instance;
+  public store: KVStore;
 
-  constructor(public wasmByteCode: ArrayBuffer, public store: object = {}) {
+  constructor(public wasmByteCode: ArrayBuffer, store?: KVStore) {
+    if (store === undefined) {
+      store = new KVStore();
+    }
+    this.store = store;
     let imports = {
       env: {
         db_read: this.db_read.bind(this),
@@ -44,6 +50,23 @@ export class CosmWasmVM {
     deallocate(region.ptr);
   }
 
+  public allocate_bytes(bytes: Uint8Array): Region {
+    let region = this.allocate(bytes.length);
+    region.write(bytes);
+    return region;
+  }
+
+  public allocate_b64(b64: string): Region {
+    let bytes = Buffer.from(b64, 'base64');
+    return this.allocate_bytes(bytes);
+  }
+
+  public allocate_str(str: string): Region {
+    let region = this.allocate(str.length);
+    region.write_str(str);
+    return region;
+  }
+
   public allocate_json(obj: object): Region {
     let region = this.allocate(JSON.stringify(obj).length);
     region.write_json(obj);
@@ -52,28 +75,28 @@ export class CosmWasmVM {
 
   public instantiate(env: object, info: object, msg: object): Region {
     let { instantiate } = this.exports;
-    let args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
+    let args = [env, info, msg].map(x => this.allocate_json(x).ptr);
     let result = instantiate(...args);
     return this.region(result);
   }
 
   public execute(env: object, info: object, msg: object): Region {
     let { execute } = this.exports;
-    let args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
+    let args = [env, info, msg].map(x => this.allocate_json(x).ptr);
     let result = execute(...args);
     return this.region(result);
   }
 
   public query(info: object, msg: object): Region {
     let { query } = this.exports;
-    let args = [info, msg].map((x) => this.allocate_json(x).ptr);
+    let args = [info, msg].map(x => this.allocate_json(x).ptr);
     let result = query(...args);
     return this.region(result);
   }
 
   public migrate(env: object, info: object, msg: object): Region {
     let { migrate } = this.exports;
-    let args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
+    let args = [env, info, msg].map(x => this.allocate_json(x).ptr);
     let result = migrate(...args);
     return this.region(result);
   }
@@ -94,55 +117,170 @@ export class CosmWasmVM {
     this.do_db_remove(key);
   }
 
+  db_scan(start_ptr: number, end_ptr: number, order: number): number {
+    let start = this.region(start_ptr);
+    let end = this.region(end_ptr);
+    return this.do_db_scan(start, end, order).ptr;
+  }
+
+  db_next(iterator_id: number): number {
+    return this.do_db_next(iterator_id).ptr;
+  }
+
+  addr_canonicalize(source_ptr: number, destination_ptr: number): number {
+    let source = this.region(source_ptr);
+    let destination = this.region(destination_ptr);
+    return this.do_addr_canonicalize(source, destination).ptr;
+  }
+
+  addr_humanize(source_ptr: number, destination_ptr: number): number {
+    let source = this.region(source_ptr);
+    let destination = this.region(destination_ptr);
+    return this.do_addr_humanize(source, destination).ptr;
+  }
+
+  addr_validate(source_ptr: number): number {
+    let source = this.region(source_ptr);
+    return this.do_addr_validate(source).ptr;
+  }
+
+  secp256k1_verify(
+    hash_ptr: number,
+    signature_ptr: number,
+    pubkey_ptr: number
+  ): number {
+    let hash = this.region(hash_ptr);
+    let signature = this.region(signature_ptr);
+    let pubkey = this.region(pubkey_ptr);
+    return this.do_secp256k1_verify(hash, signature, pubkey).ptr;
+  }
+
+  secp256k1_recover_pubkey(
+    hash_ptr: number,
+    signature_ptr: number,
+    recover_param: number
+  ): Region {
+    let hash = this.region(hash_ptr);
+    let signature = this.region(signature_ptr);
+    return this.do_secp256k1_recover_pubkey(hash, signature, recover_param);
+  }
+
+  ed25519_verify(
+    message_ptr: number,
+    signature_ptr: number,
+    pubkey_ptr: number
+  ): number {
+    let message = this.region(message_ptr);
+    let signature = this.region(signature_ptr);
+    let pubkey = this.region(pubkey_ptr);
+    return this.do_ed25519_verify(message, signature, pubkey).ptr;
+  }
+
+  ed25519_batch_verify(
+    messages_ptr: number,
+    signatures_ptr: number,
+    public_keys_ptr: number
+  ): number {
+    let messages = this.region(messages_ptr);
+    let signatures = this.region(signatures_ptr);
+    let public_keys = this.region(public_keys_ptr);
+    return this.do_ed25519_batch_verify(messages, signatures, public_keys).ptr;
+  }
+
+  debug(message_ptr: number) {
+    let message = this.region(message_ptr);
+    this.do_debug(message);
+  }
+
+  query_chain(request_ptr: number): number {
+    let request = this.region(request_ptr);
+    return this.do_query_chain(request).ptr;
+  }
+
   public region(ptr: number): Region {
     return new Region(this.exports.memory, ptr);
   }
 
   protected do_db_read(key: Region): Region {
-    return this.allocate_json(this.store[key.str]);
+    let value = this.store.get(key.b64);
+    let result: Region;
+    if (value === undefined) {
+      console.log(`db_read: key not found: ${key.str}`);
+      result = this.allocate_bytes(Uint8Array.from([0]));
+    } else {
+      console.log(`db_read: key found: ${key.str}`);
+      result = this.allocate_b64(value);
+    }
+    console.log(`db_read: ${key.str} => ${result.str}`);
+    return result;
   }
 
   protected do_db_write(key: Region, value: Region) {
-    this.store[key.str] = value.str;
+    console.log(`db_write ${key.str} => ${value.str}`);
+    this.store.set(key.b64, value.b64);
   }
 
-  protected db_remove(key: Region) {}
+  protected do_db_remove(key: Region) {
+    this.store.delete(key.b64);
+  }
 
-  protected db_scan(start: Region, end: Region, order: number) {}
+  protected do_db_scan(start: Region, end: Region, order: number): Region {
+    throw new Error('not implemented');
+  }
 
-  protected db_next(iterator_id: number) {}
+  protected do_db_next(iterator_id: number): Region {
+    throw new Error('not implemented');
+  }
 
-  protected addr_humanize(source: Region, destination: Region): Region {}
+  protected do_addr_humanize(source: Region, destination: Region): Region {
+    throw new Error('not implemented');
+  }
 
-  protected addr_canonicalize(source: Region, destination: Region): Region {}
+  protected do_addr_canonicalize(source: Region, destination: Region): Region {
+    throw new Error('not implemented');
+  }
 
-  protected addr_validate(source: Region): Region {}
+  protected do_addr_validate(source: Region): Region {
+    throw new Error('not implemented');
+  }
 
-  protected secp256k1_verify(
+  protected do_secp256k1_verify(
     hash: Region,
     signature: Region,
     pubkey: Region
-  ): Region {}
+  ): Region {
+    throw new Error('not implemented');
+  }
 
-  protected secp256k1_recover_pubkey(
+  protected do_secp256k1_recover_pubkey(
     hash: Region,
     signature: Region,
     recover_param: number
-  ): Region {}
+  ): Region {
+    throw new Error('not implemented');
+  }
 
-  protected ed25519_verify(
+  protected do_ed25519_verify(
     message: Region,
     signature: Region,
     pubkey: Region
-  ): Region {}
+  ): Region {
+    throw new Error('not implemented');
+  }
 
-  protected ed25519_batch_verify(
+  protected do_ed25519_batch_verify(
     messages: Region,
     signatures: Region,
     public_keys: Region
-  ): Region {}
+  ): Region {
+    throw new Error('not implemented');
+  }
 
-  protected debug(message: Region) {}
+  protected do_debug(message: Region) {
+    console.log(message.read_str());
+  }
 
-  protected query_chain(request: Region): Region {}
+  protected do_query_chain(request: Region): Region {
+    throw new Error('not implemented');
+  }
 }
