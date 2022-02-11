@@ -32,7 +32,7 @@
     "trailingComma": "es5"
   },
   "name": "cosmwasm-vm",
-  "author": "William Chen",
+  "author": "Terran One",
   "module": "dist/cosmwasm-vm.esm.js",
   "size-limit": [
     {

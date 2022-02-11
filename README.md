@@ -8,19 +8,17 @@ This package implements a pure JavaScript (no Rust bindings / WASM needed) VM ca
 
 ## Setup
 
-Add the `cosmwasm-vm-js` package as a dependency in your `package.json`.
+Add the `cosmwasm-vm` package as a dependency in your `package.json`.
 
 ```sh
-npm install -S cosmwasm-vm-js
+npm install -S cosmwasm-vm
 ```
 
 or
 
 ```sh
-yarn add cosmwasm-vm-js
+yarn add cosmwasm-vm
 ```
-
-##
 
 ## Usage
 
