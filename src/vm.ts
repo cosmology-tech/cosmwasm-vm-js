@@ -1,9 +1,10 @@
 import { Region } from './memory';
 import { KVStore } from './store';
-
+import { bech32, BechLib } from 'bech32';
 export class CosmWasmVM {
   public instance: WebAssembly.Instance;
   public store: KVStore;
+  public bech32: BechLib;
 
   constructor(public wasmByteCode: ArrayBuffer, store?: KVStore) {
     if (store === undefined) {
@@ -33,6 +34,8 @@ export class CosmWasmVM {
       new WebAssembly.Module(wasmByteCode),
       imports
     );
+
+    this.bech32 = bech32;
   }
 
   protected get exports(): any {
@@ -237,9 +240,12 @@ export class CosmWasmVM {
   }
 
   protected do_addr_canonicalize(source: Region, destination: Region): Region {
-    throw new Error('not implemented');
+    let canonical = this.bech32.fromWords(
+      this.bech32.decode(source.str).words
+    );
+    destination = this.allocate_bytes(Buffer.from(canonical));
+    return new Region(this.exports.memory, 0);
   }
-
   protected do_addr_validate(source: Region): Region {
     throw new Error('not implemented');
   }
