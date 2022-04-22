@@ -1,0 +1,2 @@
+cargo:rustc-env=TYPENUM_BUILD_CONSTS=/Users/sascha1337/dev/cosmwasm-vm-js/cosmwasm-vm-test/target/debug/build/typenum-fca18f9002ff4146/out/consts.rs
+cargo:rustc-env=TYPENUM_BUILD_OP=/Users/sascha1337/dev/cosmwasm-vm-js/cosmwasm-vm-test/target/debug/build/typenum-fca18f9002ff4146/out/op.rs

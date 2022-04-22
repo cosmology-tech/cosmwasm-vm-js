@@ -240,9 +240,7 @@ export class CosmWasmVM {
   }
 
   protected do_addr_canonicalize(source: Region, destination: Region): Region {
-    let canonical = this.bech32.fromWords(
-      this.bech32.decode(source.str).words
-    );
+    let canonical = this.bech32.fromWords(this.bech32.decode(source.str).words);
     destination = this.allocate_bytes(Buffer.from(canonical));
     return new Region(this.exports.memory, 0);
   }
