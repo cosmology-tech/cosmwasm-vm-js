@@ -1,6 +1,6 @@
+import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
 import { KVStore } from './store';
-import { bech32, BechLib } from 'bech32';
 export class CosmWasmVM {
   public instance: WebAssembly.Instance;
   public store: KVStore;
@@ -245,7 +245,10 @@ export class CosmWasmVM {
     return new Region(this.exports.memory, 0);
   }
   protected do_addr_validate(source: Region): Region {
-    throw new Error('not implemented');
+    // TODO:
+    // do real check - bypass here is to simply return a zero pointer
+    return new Region(this.exports.memory, 0);
+    // throw new Error('not implemented');
   }
 
   protected do_secp256k1_verify(
