@@ -4,5 +4,5 @@ node_modules
 dist
 .nova/
 .env
-/target/
+target/
 
