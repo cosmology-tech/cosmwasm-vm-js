@@ -52,7 +52,7 @@ pub fn execute(
     }
 }
 
-pub fn try_debug(deps: DepsMut, message: String) -> Result<Response, ContractError> {
+pub fn try_debug(_deps: DepsMut,_message: String) -> Result<Response, ContractError> {
     Ok(Default::default())
 }
 
