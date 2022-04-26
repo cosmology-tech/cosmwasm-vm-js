@@ -1,36 +1,38 @@
-import { CosmWasmVM } from '../src';
 import { readFileSync } from 'fs';
+import { CosmWasmVM } from '../src';
 
 const wasm_byte_code = readFileSync('./cosmwasm_vm_test.wasm');
 const vm = new CosmWasmVM(wasm_byte_code);
 
 const mock_env = {
   block: {
-    height: 1,
+    height: 1337,
     time: '2000000000',
     chain_id: 'columbus-5',
   },
   contract: {
-    address: 'contract',
+    address: 'terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76',
   },
 };
 
 const mock_info = {
-  sender: 'sender',
-  funds: [],
+  sender: 'terra1337xewwfv3jdjuz8e0nea9vd8dpugc0k2dcyt3', 
+  funds: [
+  ],
 };
 
+// TODO: stashed, obsolete code to be replaced
 describe('CosmWasmVM', () => {
   it('instantiates', () => {
-    let res = vm.instantiate(mock_env, mock_info, { count: 20 });
-    console.log(res.json);
+    const chain = vm.instantiate(mock_env, mock_info, { count: 20 });
+    console.log(chain.json);
     console.log(vm.store);
   });
 
-  it('execute', () => {
-    let res = vm.instantiate(mock_env, mock_info, { count: 20 });
-    res = vm.execute(mock_env, mock_info, { increment: {} });
-    console.log(res.json);
+it('execute', () => {
+    let chain = vm.instantiate(mock_env, mock_info, { count: 20 });
+    chain = vm.execute(mock_env, mock_info, { increment: {} });
+    console.log(chain.json);
     console.log(vm.store);
   });
 });
