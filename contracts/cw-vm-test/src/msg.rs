@@ -14,6 +14,7 @@ pub enum ExecuteMsg {
     AddrValidate { str: String },
     AddrHumanize { str: String },
     AddrCanonicalize { str: String },
+    Secp256k1Verify { hash: String,  signature: String, public_keystr: String },
     Debug { message: String },
     DbWrite { key: String, value: String },
     DbRead { key: String },

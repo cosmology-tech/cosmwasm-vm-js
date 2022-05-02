@@ -46,6 +46,7 @@ pub fn execute(
         ExecuteMsg::AddrValidate { str } => try_addr_validate(deps, str),
         ExecuteMsg::AddrHumanize { str } => try_addr_humanize(deps, str),
         ExecuteMsg::AddrCanonicalize { str } => try_addr_canonicalize(deps, str),
+        ExecuteMsg::Secp256k1Verify { hash, signature, public_keystr } => try_secp256k1_verify(deps, hash, signature, public_keystr),
         ExecuteMsg::Debug { message } => try_debug(deps, message),
         ExecuteMsg::DbWrite { key, value } => try_db_write(deps, key, value),
         ExecuteMsg::DbRead { key } => try_db_read(deps, key),
@@ -78,6 +79,20 @@ pub fn try_addr_humanize(deps: DepsMut, str: String) -> Result<Response, Contrac
 pub fn try_addr_canonicalize(deps: DepsMut, str: String) -> Result<Response, ContractError> {
     Ok(Response::new().add_attribute("result", deps.api.addr_canonicalize(&str)?.to_string()))
 }
+
+pub fn try_secp256k1_verify(deps: DepsMut,hash: String,  signature: String, public_keystr: String) -> Result<Response, ContractError> {
+    let hashed = hex::decode(&hash).unwrap();
+    let signed = hex::decode(&signature).unwrap();
+    let pubkey = hex::decode(&public_keystr).unwrap();
+
+    let res = deps.api.secp256k1_verify(&hashed,&signed,&pubkey).unwrap_err();
+    // let erro_contract = ContractError::from(res?);
+    Ok(Response::new().add_attribute("result", res.to_string()))
+
+    // Ok(Response::new().add_attribute("result",
+    // deps.api.?.to_string()))
+}
+
 
 pub fn try_addr_validate(deps: DepsMut, str: String) -> Result<Response, ContractError> {
     Ok(Response::new().add_attribute("result", deps.api.addr_validate(&str)?.to_string()))
