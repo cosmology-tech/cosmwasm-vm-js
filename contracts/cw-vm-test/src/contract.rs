@@ -46,14 +46,18 @@ pub fn execute(
         ExecuteMsg::AddrValidate { str } => try_addr_validate(deps, str),
         ExecuteMsg::AddrHumanize { str } => try_addr_humanize(deps, str),
         ExecuteMsg::AddrCanonicalize { str } => try_addr_canonicalize(deps, str),
-        ExecuteMsg::Secp256k1Verify { hash, signature, public_keystr } => try_secp256k1_verify(deps, hash, signature, public_keystr),
+        ExecuteMsg::Secp256k1Verify {
+            hash,
+            signature,
+            public_keystr,
+        } => try_secp256k1_verify(deps, hash, signature, public_keystr),
         ExecuteMsg::Debug { message } => try_debug(deps, message),
         ExecuteMsg::DbWrite { key, value } => try_db_write(deps, key, value),
         ExecuteMsg::DbRead { key } => try_db_read(deps, key),
     }
 }
 
-pub fn try_debug(_deps: DepsMut,_message: String) -> Result<Response, ContractError> {
+pub fn try_debug(_deps: DepsMut, _message: String) -> Result<Response, ContractError> {
     Ok(Default::default())
 }
 
@@ -80,16 +84,22 @@ pub fn try_addr_canonicalize(deps: DepsMut, str: String) -> Result<Response, Con
     Ok(Response::new().add_attribute("result", deps.api.addr_canonicalize(&str)?.to_string()))
 }
 
-pub fn try_secp256k1_verify(deps: DepsMut,hash: String,  signature: String, public_keystr: String) -> Result<Response, ContractError> {
-
+pub fn try_secp256k1_verify(
+    deps: DepsMut,
+    hash: String,
+    signature: String,
+    public_keystr: String,
+) -> Result<Response, ContractError> {
     let hashed = hex::decode(&hash).unwrap();
     let signed = hex::decode(&signature).unwrap();
     let pubkey = hex::decode(&public_keystr).unwrap();
 
-    let res = deps.api.secp256k1_verify(&hashed,&signed,&pubkey).unwrap_err();
+    let res = deps
+        .api
+        .secp256k1_verify(&hashed, &signed, &pubkey)
+        .unwrap_err();
     Ok(Response::new().add_attribute("result", res.to_string()))
 }
-
 
 pub fn try_addr_validate(deps: DepsMut, str: String) -> Result<Response, ContractError> {
     Ok(Response::new().add_attribute("result", deps.api.addr_validate(&str)?.to_string()))
@@ -129,8 +139,8 @@ fn query_count(deps: Deps) -> StdResult<CountResponse> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::Api;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use cosmwasm_std::Api;
     use cosmwasm_std::{coins, from_binary};
 
     #[test]
@@ -202,10 +212,9 @@ mod tests {
         let api = cosmwasm_std::testing::MockApi::default();
 
         const SECP256K1_MSG_HASH_HEX: &str =
-        "5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0";
+            "5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0";
         const SECP256K1_SIG_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
         const SECP256K1_PUBKEY_HEX: &str = "04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73";
-
 
         let hash = hex::decode(SECP256K1_MSG_HASH_HEX).unwrap();
         let signature = hex::decode(SECP256K1_SIG_HEX).unwrap();
@@ -215,6 +224,4 @@ mod tests {
             .secp256k1_verify(&hash, &signature, &public_key)
             .unwrap());
     }
-
-
 }
