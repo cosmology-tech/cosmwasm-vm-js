@@ -81,16 +81,13 @@ pub fn try_addr_canonicalize(deps: DepsMut, str: String) -> Result<Response, Con
 }
 
 pub fn try_secp256k1_verify(deps: DepsMut,hash: String,  signature: String, public_keystr: String) -> Result<Response, ContractError> {
+
     let hashed = hex::decode(&hash).unwrap();
     let signed = hex::decode(&signature).unwrap();
     let pubkey = hex::decode(&public_keystr).unwrap();
 
     let res = deps.api.secp256k1_verify(&hashed,&signed,&pubkey).unwrap_err();
-    // let erro_contract = ContractError::from(res?);
     Ok(Response::new().add_attribute("result", res.to_string()))
-
-    // Ok(Response::new().add_attribute("result",
-    // deps.api.?.to_string()))
 }
 
 
