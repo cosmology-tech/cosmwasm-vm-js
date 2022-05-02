@@ -21,7 +21,6 @@ const mock_info = {
   ],
 };
 
-// TODO: stashed, obsolete code to be replaced
 describe('CosmWasmVM', () => {
   it('instantiates', () => {
     const chain = vm.instantiate(mock_env, mock_info, { count: 20 });

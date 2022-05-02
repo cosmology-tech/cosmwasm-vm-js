@@ -129,6 +129,7 @@ fn query_count(deps: Deps) -> StdResult<CountResponse> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use cosmwasm_std::Api;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use cosmwasm_std::{coins, from_binary};
 
@@ -195,4 +196,25 @@ mod tests {
         let value: CountResponse = from_binary(&res).unwrap();
         assert_eq!(5, value.count);
     }
+
+    #[test]
+    fn secp256k1_verify_works() {
+        let api = cosmwasm_std::testing::MockApi::default();
+
+        const SECP256K1_MSG_HASH_HEX: &str =
+        "5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0";
+        const SECP256K1_SIG_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
+        const SECP256K1_PUBKEY_HEX: &str = "04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73";
+
+
+        let hash = hex::decode(SECP256K1_MSG_HASH_HEX).unwrap();
+        let signature = hex::decode(SECP256K1_SIG_HEX).unwrap();
+        let public_key = hex::decode(SECP256K1_PUBKEY_HEX).unwrap();
+
+        assert!(api
+            .secp256k1_verify(&hash, &signature, &public_key)
+            .unwrap());
+    }
+
+
 }
