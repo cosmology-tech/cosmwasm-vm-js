@@ -16,9 +16,8 @@ const mock_env = {
 };
 
 const mock_info = {
-  sender: 'terra1337xewwfv3jdjuz8e0nea9vd8dpugc0k2dcyt3', 
-  funds: [
-  ],
+  sender: 'terra1337xewwfv3jdjuz8e0nea9vd8dpugc0k2dcyt3',
+  funds: [],
 };
 
 describe('CosmWasmVM', () => {
@@ -28,7 +27,7 @@ describe('CosmWasmVM', () => {
     console.log(vm.store);
   });
 
-it('execute', () => {
+  it('execute', () => {
     let chain = vm.instantiate(mock_env, mock_info, { count: 20 });
     chain = vm.execute(mock_env, mock_info, { increment: {} });
     console.log(chain.json);

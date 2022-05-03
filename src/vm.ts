@@ -81,28 +81,28 @@ export class CosmWasmVM {
 
   public instantiate(env: object, info: object, msg: object): Region {
     let { instantiate } = this.exports;
-    let args = [env, info, msg].map(x => this.allocate_json(x).ptr);
+    let args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
     let result = instantiate(...args);
     return this.region(result);
   }
 
   public execute(env: object, info: object, msg: object): Region {
     let { execute } = this.exports;
-    let args = [env, info, msg].map(x => this.allocate_json(x).ptr);
+    let args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
     let result = execute(...args);
     return this.region(result);
   }
 
   public query(info: object, msg: object): Region {
     let { query } = this.exports;
-    let args = [info, msg].map(x => this.allocate_json(x).ptr);
+    let args = [info, msg].map((x) => this.allocate_json(x).ptr);
     let result = query(...args);
     return this.region(result);
   }
 
   public migrate(env: object, info: object, msg: object): Region {
     let { migrate } = this.exports;
-    let args = [env, info, msg].map(x => this.allocate_json(x).ptr);
+    let args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
     let result = migrate(...args);
     return this.region(result);
   }
@@ -243,7 +243,9 @@ export class CosmWasmVM {
   }
 
   protected do_addr_canonicalize(source: Region, destination: Region): Region {
-    const canonical = this.bech32.fromWords(this.bech32.decode(source.str).words);
+    const canonical = this.bech32.fromWords(
+      this.bech32.decode(source.str).words
+    );
     destination = this.allocate_bytes(Buffer.from(canonical));
     return new Region(this.exports.memory, 0);
   }
