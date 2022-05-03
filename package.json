@@ -1,59 +1,65 @@
 {
-  "version": "0.1.0",
-  "license": "MIT",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
-  "files": [
-    "dist",
-    "src"
-  ],
-  "engines": {
-    "node": ">=10"
-  },
-  "scripts": {
-    "start": "tsdx watch",
-    "build": "tsdx build",
-    "test": "tsdx test",
-    "lint": "tsdx lint",
-    "prepare": "tsdx build",
-    "size": "size-limit",
-    "analyze": "size-limit --why"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint"
-    }
-  },
-  "prettier": {
-    "printWidth": 80,
-    "semi": true,
-    "singleQuote": true,
-    "trailingComma": "es5"
-  },
-  "name": "cosmwasm-vm",
-  "author": "Terran One",
-  "module": "dist/cosmwasm-vm.esm.js",
-  "size-limit": [
-    {
-      "path": "dist/cosmwasm-vm.cjs.production.min.js",
-      "limit": "10 KB"
+    "name": "cs.ts",
+    "version": "0.1.0",
+    "license": "MIT",
+    "author": "TerranOne",
+    "main": "dist/index.js",
+    "module": "dist/cw-vm.ts.esm.js",
+    "typings": "dist/index.d.ts",
+    "files": [
+        "dist",
+        "src"
+    ],
+    "scripts": {
+        "analyze": "size-limit --why",
+        "build": "dts build",
+        "lint": "dts lint",
+        "prepare": "dts build",
+        "size": "size-limit",
+        "start": "dts watch",
+        "test": "dts test",
+        "//degit:contracts": "cd contracts && npx degit CosmWasm/cosmwasm/contracts/hackatom#0.16 hackatom"
     },
-    {
-      "path": "dist/cosmwasm-vm.esm.js",
-      "limit": "10 KB"
+    "husky": {
+        "hooks": {
+            "pre-commit": "dts lint --fix"
+        }
+    },
+    "prettier": {
+        "printWidth": 80,
+        "semi": true,
+        "singleQuote": true,
+        "trailingComma": "es5"
+    },
+    "peerDependencies": {},
+    "engines": {
+        "node": ">=12"
+    },
+    "size-limit": [
+        {
+            "path": "dist/cw-vm.ts.cjs.production.min.js",
+            "limit": "10 KB"
+        },
+        {
+            "path": "dist/cw-vm.ts.esm.js",
+            "limit": "10 KB"
+        }
+    ],
+    "devDependencies": {
+        "@babel/preset-typescript": "^7.16.7",
+        "@cosmjs/crypto": "^0.28.4",
+        "@cosmjs/encoding": "^0.28.4",
+        "@size-limit/preset-small-lib": "^7.0.8",
+        "@tsconfig/recommended": "^1.0.1",
+        "@types/jest": "^27.4.1",
+        "bech32": "^2.0.0",
+        "dts-cli": "^1.5.1",
+        "husky": "^7.0.4",
+        "majestic": "^1.8.1",
+        "size-limit": "^7.0.8",
+        "synchronized-promise": "^0.3.1",
+        "ts-jest": "^27.1.4",
+        "tslib": "^2.4.0",
+        "typescript": "^4.6.3"
     }
-  ],
-  "devDependencies": {
-    "@size-limit/preset-small-lib": "^7.0.8",
-    "@size-limit/webpack": "^7.0.8",
-    "@typescript-eslint/eslint-plugin": "^5.20.0",
-    "@typescript-eslint/parser": "^5.20.0",
-    "bech32": "^2.0.0",
-    "eslint": "^8.14.0",
-    "husky": "^7.0.4",
-    "size-limit": "^7.0.8",
-    "tsdx": "^0.14.1",
-    "tslib": "^2.3.1",
-    "typescript": "^4.5.5"
-  }
 }
