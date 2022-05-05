@@ -24,7 +24,7 @@ yarn add cosmwasm-vm
 
 Please refer to the test in this repository for an example. I include a test contract based on `cosmwasm/cw-template` that has been augmented with additional `ExecuteMsg` variants for testing the various WASM imports.
 
-```
+```sh
 yarn
 yarn test
 ```
