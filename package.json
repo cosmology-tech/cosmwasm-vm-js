@@ -1,13 +1,11 @@
 {
     "name": "cs.ts",
-    "type": "module",
     "version": "0.1.0",
     "license": "MIT",
     "author": "TerranOne",
     "main": "dist/index.js",
     "module": "dist/cw-vm.ts.esm.js",
     "typings": "dist/index.d.ts",
-
     "files": [
         "dist",
         "src"

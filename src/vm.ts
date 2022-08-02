@@ -30,7 +30,6 @@ export class CosmWasmVM {
         ed25519_batch_verify: this.ed25519_batch_verify.bind(this),
         debug: this.debug.bind(this),
         query_chain: this.query_chain.bind(this),
-        abort: this.abort.bind(this)
       },
     };
 
@@ -199,12 +198,6 @@ export class CosmWasmVM {
     this.do_debug(message);
   }
 
-  abort(message_ptr: number, file_ptr: number, line: number, column: number) {
-    let message = this.region(message_ptr);
-    let file = this.region(file_ptr);
-    this.do_abort(message, file, line, column);
-  }
-
   query_chain(request_ptr: number): number {
     let request = this.region(request_ptr);
     return this.do_query_chain(request).ptr;
@@ -296,12 +289,6 @@ export class CosmWasmVM {
 
   protected do_debug(message: Region) {
     console.log(message.read_str());
-  }
-
-  protected do_abort(message: Region, file: Region, line: number, column: number) {
-    throw new Error(
-      `abort: ${message.read_str()} at ${file.read_str()}:${line}:${column}`
-    );
   }
 
   protected do_query_chain(request: Region): Region {
