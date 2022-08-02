@@ -33,4 +33,20 @@ describe('CosmWasmVM', () => {
     console.log(chain.json);
     console.log(vm.store);
   });
+
+  it('query', () => {
+    let chain = vm.instantiate(mock_env, mock_info, { count: 20 });
+    chain = vm.query(mock_info, { get_count: {} });
+    console.log(chain.json);
+    console.log(vm.store);
+  });
+
+  it('abort', () => {
+    try {
+      let chain = vm.instantiate(mock_env, mock_info, { count: 20 });
+      vm.abort(4, 8, 16, 32);
+    } catch (e) {
+      expect(e).toEqual(new Error('abort:  at :16:32'));
+    }
+  });
 });
