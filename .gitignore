@@ -6,4 +6,5 @@ dist
 .env
 target/
 .vscode/
+.idea/
 
