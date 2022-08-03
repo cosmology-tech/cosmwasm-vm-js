@@ -111,4 +111,33 @@ describe('CosmWasmVM', () => {
     console.log(vm.store);
     expect(number).toEqual(0);
   });
+
+  it('should addr_validate valid address', () => {
+    const cosmosAddr = bech32.encode(
+      'cosmos1',
+      bech32.toWords(
+        Buffer.from('1234567890abcdef1234567890abcdef12345678', 'hex')
+      )
+    );
+    const region = vm.allocate_str(cosmosAddr);
+    const number = vm.addr_validate(region.ptr);
+    console.log(number);
+    console.log(vm.store);
+    expect(number).toEqual(0);
+  });
+
+  it('addr_validate should throw error for invalid address', () => {
+    try {
+      const region = vm.allocate_str(
+        'cosmos11zg69v7ys40x77y352eufp27daufrg4nchuhe2ng'
+      );
+      vm.addr_validate(region.ptr);
+    } catch (e) {
+      expect(e).toEqual(
+        new Error(
+          'Invalid checksum for cosmos11zg69v7ys40x77y352eufp27daufrg4nchuhe2ng'
+        )
+      );
+    }
+  });
 });

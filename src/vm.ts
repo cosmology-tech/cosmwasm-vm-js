@@ -254,6 +254,7 @@ export class CosmWasmVM {
       this.bech32.decode(source.str).words
     );
 
+    // TODO: Change prefix to be configurable
     const human = this.bech32.encode('cosmos1', this.bech32.toWords(canonical));
     destination = this.allocate_str(human);
     return new Region(this.exports.memory, 0);
@@ -269,6 +270,23 @@ export class CosmWasmVM {
 
   protected do_addr_validate(source: Region): Region {
     // TODO: do real check - bypass here is to simply return a zero pointer
+    if (source.str.length === 0) {
+      throw new Error('Empty address.');
+    }
+
+    const canonical = this.bech32.fromWords(
+      this.bech32.decode(source.str).words
+    );
+
+    if (canonical.length === 0) {
+      throw new Error('Invalid address.');
+    }
+
+    // TODO: Change prefix to be configurable
+    const human = this.bech32.encode('cosmos1', this.bech32.toWords(canonical));
+    if (human !== source.str) {
+      throw new Error('Invalid address.');
+    }
     return new Region(this.exports.memory, 0);
   }
 
