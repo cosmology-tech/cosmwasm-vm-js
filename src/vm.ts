@@ -134,7 +134,7 @@ export class CosmWasmVM {
     return this.do_db_next(iterator_id).ptr;
   }
 
-addr_canonicalize(source_ptr: number, destination_ptr: number): number {
+  addr_canonicalize(source_ptr: number, destination_ptr: number): number {
     let source = this.region(source_ptr);
     let destination = this.region(destination_ptr);
     return this.do_addr_canonicalize(source, destination).ptr;
@@ -250,7 +250,7 @@ addr_canonicalize(source_ptr: number, destination_ptr: number): number {
       this.bech32.decode(source.str).words
     );
 
-    const human = this.bech32.encode("cosmos1", this.bech32.toWords(canonical));
+    const human = this.bech32.encode('cosmos1', this.bech32.toWords(canonical));
     destination = this.allocate_str(human);
     return new Region(this.exports.memory, 0);
   }
@@ -308,7 +308,12 @@ addr_canonicalize(source_ptr: number, destination_ptr: number): number {
     throw new Error('not implemented');
   }
 
-  protected do_abort(message: Region, file: Region, line: number, column: number) {
+  protected do_abort(
+    message: Region,
+    file: Region,
+    line: number,
+    column: number
+  ) {
     throw new Error(
       `abort: ${message.read_str()} at ${file.read_str()}:${line}:${column}`
     );
