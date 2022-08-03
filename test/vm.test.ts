@@ -140,4 +140,24 @@ describe('CosmWasmVM', () => {
       );
     }
   });
+
+  it('addr_validate should throws error for too long address', () => {
+    try {
+      const region = vm.allocate_str(
+        'cosmos11zg69v7ys40x77y352eufp27daufrg4nchuhe2ngdafsadfsafasdfasfasfsadfsadfsafsafdasfsadfsadf'
+      );
+      vm.addr_validate(region.ptr);
+    } catch (e) {
+      expect(e).toEqual(new Error('Exceeds length limit'));
+    }
+  });
+
+  it('addr_validate should throws error for empty address', () => {
+    try {
+      const region = vm.allocate_str('');
+      vm.addr_validate(region.ptr);
+    } catch (e) {
+      expect(e).toEqual(new Error('Empty address.'));
+    }
+  });
 });

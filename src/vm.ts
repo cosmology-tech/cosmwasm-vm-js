@@ -5,6 +5,7 @@ import { Region } from './memory';
 import { KVStore } from './store';
 
 export class CosmWasmVM {
+  public PREFIX: string = 'cosmos1';
   public instance?: WebAssembly.Instance;
   public store: KVStore;
   public bech32: BechLib;
@@ -250,17 +251,28 @@ export class CosmWasmVM {
   }
 
   protected do_addr_humanize(source: Region, destination: Region): Region {
+    if (source.str.length === 0) {
+      throw new Error('Empty address.');
+    }
+
     const canonical = this.bech32.fromWords(
       this.bech32.decode(source.str).words
     );
 
-    // TODO: Change prefix to be configurable
-    const human = this.bech32.encode('cosmos1', this.bech32.toWords(canonical));
+    // TODO: Change prefix to be configurable per environment
+    const human = this.bech32.encode(
+      this.PREFIX,
+      this.bech32.toWords(canonical)
+    );
     destination = this.allocate_str(human);
     return new Region(this.exports.memory, 0);
   }
 
   protected do_addr_canonicalize(source: Region, destination: Region): Region {
+    if (source.str.length === 0) {
+      throw new Error('Empty address.');
+    }
+
     const canonical = this.bech32.fromWords(
       this.bech32.decode(source.str).words
     );
@@ -269,7 +281,6 @@ export class CosmWasmVM {
   }
 
   protected do_addr_validate(source: Region): Region {
-    // TODO: do real check - bypass here is to simply return a zero pointer
     if (source.str.length === 0) {
       throw new Error('Empty address.');
     }
@@ -282,8 +293,11 @@ export class CosmWasmVM {
       throw new Error('Invalid address.');
     }
 
-    // TODO: Change prefix to be configurable
-    const human = this.bech32.encode('cosmos1', this.bech32.toWords(canonical));
+    // TODO: Change prefix to be configurable per environment
+    const human = this.bech32.encode(
+      this.PREFIX,
+      this.bech32.toWords(canonical)
+    );
     if (human !== source.str) {
       throw new Error('Invalid address.');
     }
