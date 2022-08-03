@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { CosmWasmVM } from '../src';
+import { bech32, BechLib } from 'bech32';
 
 const wasm_byte_code = readFileSync('./cosmwasm_vm_test.wasm');
 const vm = new CosmWasmVM(wasm_byte_code);
@@ -25,6 +26,8 @@ describe('CosmWasmVM', () => {
     const chain = vm.instantiate(mock_env, mock_info, { count: 20 });
     console.log(chain.json);
     console.log(vm.store);
+    expect(chain.json).toEqual({"ok": {"attributes": [{"key": "method", "value": "instantiate"}, {"key": "owner", "value": "terra1337xewwfv3jdjuz8e0nea9vd8dpugc0k2dcyt3"}, {"key": "count", "value": "20"}], "data": null, "events": [], "messages": []}});
+    expect(vm.store.size).toEqual(2);
   });
 
   it('execute', () => {
@@ -32,6 +35,9 @@ describe('CosmWasmVM', () => {
     chain = vm.execute(mock_env, mock_info, { increment: {} });
     console.log(chain.json);
     console.log(vm.store);
+    const expected = {"ok": {"attributes": [{"key": "method", "value": "try_increment"}], "data": null, "events": [], "messages": []}};
+    expect(chain.json).toEqual(expected);
+    expect(vm.store.size).toEqual(2);
   });
 
   it('abort', () => {
@@ -43,13 +49,30 @@ describe('CosmWasmVM', () => {
   });
 
   it('addr_canonicalize', () => {
+    const cosmosAddr = bech32.encode('cosmos1', bech32.toWords(Buffer.from('1234567890abcdef1234567890abcdef12345678', 'hex')));
+    let region = vm.allocate_str(cosmosAddr);
     const number = vm.addr_canonicalize(
-      0,
+      region.ptr,
       vm.allocate_json({
-        address: 'terra1hsk6jryyqjfhp5dhc55tc9jtckygx0eph6dd02',
+        address: cosmosAddr,
       }).ptr,
     );
     console.log(number);
     console.log(vm.store);
+    expect(number).toEqual(0);
+  });
+
+  it('addr_humanize', () => {
+    const cosmosAddr = bech32.encode('cosmos1', bech32.toWords(Buffer.from('1234567890abcdef1234567890abcdef12345678', 'hex')));
+    let region = vm.allocate_str(cosmosAddr);
+    const number = vm.addr_humanize(
+      region.ptr,
+      vm.allocate_json({
+        address: cosmosAddr,
+      }).ptr,
+    );
+    console.log(number);
+    console.log(vm.store);
+    expect(number).toEqual(0);
   });
 });
