@@ -37,4 +37,23 @@ describe('CosmWasmVM', () => {
     console.log(chain.json);
     console.log(vm.store);
   });
+
+  it('abort', () => {
+    try {
+      vm.abort(4, 8, 16, 32);
+    } catch (e) {
+      expect(e).toEqual(new Error('abort:  at :16:32'));
+    }
+  });
+
+  it('addr_canonicalize', () => {
+    const number = vm.addr_canonicalize(
+      0,
+      vm.allocate_json({
+        address: 'terra1hsk6jryyqjfhp5dhc55tc9jtckygx0eph6dd02',
+      }).ptr,
+    );
+    console.log(number);
+    console.log(vm.store);
+  });
 });
