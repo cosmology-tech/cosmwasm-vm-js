@@ -30,6 +30,7 @@ export class CosmWasmVM {
         ed25519_batch_verify: this.ed25519_batch_verify.bind(this),
         debug: this.debug.bind(this),
         query_chain: this.query_chain.bind(this),
+        abort: this.abort.bind(this),
       },
     };
 
@@ -133,7 +134,7 @@ export class CosmWasmVM {
     return this.do_db_next(iterator_id).ptr;
   }
 
-  addr_canonicalize(source_ptr: number, destination_ptr: number): number {
+addr_canonicalize(source_ptr: number, destination_ptr: number): number {
     let source = this.region(source_ptr);
     let destination = this.region(destination_ptr);
     return this.do_addr_canonicalize(source, destination).ptr;
@@ -203,6 +204,12 @@ export class CosmWasmVM {
     return this.do_query_chain(request).ptr;
   }
 
+  abort(message_ptr: number, file_ptr: number, line: number, column: number) {
+    let message = this.region(message_ptr);
+    let file = this.region(file_ptr);
+    this.do_abort(message, file, line, column);
+  }
+
   public region(ptr: number): Region {
     return new Region(this.exports.memory, ptr);
   }
@@ -239,7 +246,13 @@ export class CosmWasmVM {
   }
 
   protected do_addr_humanize(source: Region, destination: Region): Region {
-    throw new Error('not implemented');
+    const canonical = this.bech32.fromWords(
+      this.bech32.decode(source.str).words
+    );
+
+    const human = this.bech32.encode("cosmos1", this.bech32.toWords(canonical));
+    destination = this.allocate_str(human);
+    return new Region(this.exports.memory, 0);
   }
 
   protected do_addr_canonicalize(source: Region, destination: Region): Region {
@@ -293,5 +306,11 @@ export class CosmWasmVM {
 
   protected do_query_chain(request: Region): Region {
     throw new Error('not implemented');
+  }
+
+  protected do_abort(message: Region, file: Region, line: number, column: number) {
+    throw new Error(
+      `abort: ${message.read_str()} at ${file.read_str()}:${line}:${column}`
+    );
   }
 }
