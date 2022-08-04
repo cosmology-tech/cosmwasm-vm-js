@@ -3,6 +3,8 @@
 import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
 import { KVStore } from './store';
+import { ecdsaVerify } from 'secp256k1';
+import { eddsa } from 'elliptic';
 
 export class CosmWasmVM {
   public PREFIX: string = 'cosmos1';
@@ -305,7 +307,22 @@ export class CosmWasmVM {
     signature: Region,
     pubkey: Region
   ): Region {
-    throw new Error('not implemented');
+    let result: Region;
+    const hash_bytes = Buffer.from(hash.b64, 'base64');
+    const signature_bytes = Buffer.from(signature.b64, 'base64');
+    const pubkey_bytes = Buffer.from(pubkey.b64, 'base64');
+    const isValidSignature = ecdsaVerify(
+      hash_bytes,
+      signature_bytes,
+      pubkey_bytes
+    );
+
+    if (isValidSignature) {
+      result = this.allocate_bytes(Uint8Array.from([1]));
+    } else {
+      result = this.allocate_bytes(Uint8Array.from([0]));
+    }
+    return result;
   }
 
   protected do_secp256k1_recover_pubkey(
@@ -321,7 +338,24 @@ export class CosmWasmVM {
     signature: Region,
     pubkey: Region
   ): Region {
-    throw new Error('not implemented');
+    let result: Region;
+    const message_bytes = Buffer.from(message.b64, 'base64');
+    const signature_bytes = Buffer.from(signature.b64, 'base64');
+    const pubkey_bytes = Buffer.from(pubkey.b64, 'base64');
+
+    const ec = new eddsa('ed25519');
+    const isValidSignature = ec.verify(
+      message_bytes,
+      signature_bytes,
+      pubkey_bytes
+    );
+
+    if (isValidSignature) {
+      result = this.allocate_bytes(Uint8Array.from([1]));
+    } else {
+      result = this.allocate_bytes(Uint8Array.from([0]));
+    }
+    return result;
   }
 
   protected do_ed25519_batch_verify(

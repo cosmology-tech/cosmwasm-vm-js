@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import { CosmWasmVM } from '../src';
 import { bech32 } from 'bech32';
+import { toBase64 } from '@cosmjs/encoding';
 
 const wasm_byte_code = readFileSync('./cosmwasm_vm_test.wasm');
 const vm = new CosmWasmVM(wasm_byte_code);
@@ -60,6 +61,22 @@ describe('CosmWasmVM', () => {
     };
     expect(chain.json).toEqual(expected);
     expect(vm.store.size).toEqual(2);
+  });
+
+  it('do_db_read should read a valid key', () => {
+    const key = toBase64(new Uint8Array([1, 2, 3, 4, 5]));
+    const value = '1234567890abcdef1234567890abcdef1234567890abcdef';
+    vm.store.set(key, value);
+    const result = vm.db_read(vm.allocate_b64(key).ptr);
+    expect(result).not.toEqual(null);
+  });
+
+  it('db_write should write key and value', () => {
+    const key = toBase64(new Uint8Array([1, 2, 3, 4, 5]));
+    const value = '1234567890abcdef1234567890abcdef1234567890abcdef';
+    vm.db_write(vm.allocate_b64(key).ptr, vm.allocate_str(value).ptr);
+    const allocatePtr = vm.allocate_b64(key).ptr;
+    expect(allocatePtr).toEqual(vm.region(allocatePtr).ptr);
   });
 
   it('abort', () => {
