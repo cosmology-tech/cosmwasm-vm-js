@@ -11,6 +11,7 @@ export class CosmWasmVM {
   public instance: WebAssembly.Instance;
   public store: KVStore;
   public bech32: BechLib;
+  public eddsa: eddsa;
 
   constructor(public wasmByteCode: ArrayBuffer, store?: KVStore) {
     if (store === undefined) {
@@ -43,6 +44,7 @@ export class CosmWasmVM {
     );
 
     this.bech32 = bech32;
+    this.eddsa = new eddsa('ed25519');
   }
 
   protected get exports(): any {
@@ -339,15 +341,16 @@ export class CosmWasmVM {
     pubkey: Region
   ): Region {
     let result: Region;
-    const message_bytes = Buffer.from(message.b64, 'utf-8');
-    const signature_bytes = Buffer.from(signature.b64, 'base64');
-    const pubkey_bytes = Buffer.from(pubkey.b64, 'base64');
+    const message_str = Buffer.from(message.b64, 'base64').toString('binary');
+    const signature_str = Buffer.from(signature.b64, 'base64').toString(
+      'binary'
+    );
+    const pubkey_str = Buffer.from(pubkey.b64, 'base64').toString('binary');
 
-    const ec = new eddsa('ed25519');
-    const isValidSignature = ec.verify(
-      message_bytes,
-      signature_bytes,
-      pubkey_bytes
+    const isValidSignature = this.eddsa.verify(
+      message_str,
+      signature_str,
+      pubkey_str
     );
 
     if (isValidSignature) {
