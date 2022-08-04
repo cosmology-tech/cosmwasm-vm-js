@@ -339,7 +339,7 @@ export class CosmWasmVM {
     pubkey: Region
   ): Region {
     let result: Region;
-    const message_bytes = Buffer.from(message.b64, 'base64');
+    const message_bytes = Buffer.from(message.b64, 'utf-8');
     const signature_bytes = Buffer.from(signature.b64, 'base64');
     const pubkey_bytes = Buffer.from(pubkey.b64, 'base64');
 

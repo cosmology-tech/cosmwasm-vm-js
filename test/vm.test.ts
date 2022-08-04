@@ -2,6 +2,7 @@ import { readFileSync } from 'fs';
 import { CosmWasmVM } from '../src';
 import { bech32 } from 'bech32';
 import { toBase64 } from '@cosmjs/encoding';
+import { eddsa as EDDSA } from 'elliptic';
 
 const wasm_byte_code = readFileSync('./cosmwasm_vm_test.wasm');
 const vm = new CosmWasmVM(wasm_byte_code);
@@ -172,5 +173,23 @@ describe('CosmWasmVM', () => {
     } catch (e) {
       expect(e).toEqual(new Error('Empty address.'));
     }
+  });
+
+  it('ed25519_verify', () => {
+    const ec = new EDDSA('ed25519');
+    const key = ec.keyFromSecret('1234567890abcdef1234567890abcdef12345678');
+    const msgHash = 'Terra to the moon and beyond!';
+    const signature = key.sign(msgHash).toHex();
+    const isValidKey = key.verify(msgHash, signature) ? 1 : 0;
+
+    const keyRegion = vm.allocate_str(signature);
+    const sigRegion = vm.allocate_str(signature);
+    const messageRegion = vm.allocate_str(msgHash);
+    const result = vm.ed25519_verify(
+      keyRegion.ptr,
+      sigRegion.ptr,
+      messageRegion.ptr
+    );
+    expect(result).toEqual(isValidKey);
   });
 });
