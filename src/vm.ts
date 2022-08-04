@@ -348,10 +348,8 @@ export class CosmWasmVM {
   ): Region {
     let result: Region;
     const message_str = Buffer.from(message.b64, 'base64').toString('binary');
-    const signature_str = Buffer.from(signature.b64, 'base64').toString(
-      'binary'
-    );
-    const pubkey_str = Buffer.from(pubkey.b64, 'base64').toString('binary');
+    const signature_str = this.eddsa.makeSignature(signature.b64);
+    const pubkey_str = this.eddsa.keyFromPublic(pubkey.b64);
 
     const isValidSignature = this.eddsa.verify(
       message_str,
