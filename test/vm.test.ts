@@ -175,16 +175,18 @@ describe('CosmWasmVM', () => {
     }
   });
 
-  it('ed25519_verify', () => {
+  it.skip('ed25519_verify', () => {
     const ec = new EDDSA('ed25519');
-    const key = ec.keyFromSecret('1234567890abcdef1234567890abcdef12345678');
-    const msgHash = Buffer.from('Terra to the moon and beyond!', 'utf8');
+    const key = ec.keyFromSecret(
+      '546572726120746f20746865206d6f6f6e20616e64206265796f6e6421'
+    );
+    const msgHash = 'Terra to the moon and beyond!';
     const signature = key.sign(msgHash);
     const isValidKey = key.verify(msgHash, signature) ? 1 : 0;
 
     const pubKeyRegion = vm.allocate_bytes(key.getPublic());
     const sigRegion = vm.allocate_bytes(signature.toBytes());
-    const messageRegion = vm.allocate_bytes(msgHash);
+    const messageRegion = vm.allocate_str(msgHash);
     const result = vm.ed25519_verify(
       messageRegion.ptr,
       sigRegion.ptr,

@@ -320,9 +320,9 @@ export class CosmWasmVM {
     );
 
     if (isValidSignature) {
-      result = this.allocate_bytes(Uint8Array.from([1]));
-    } else {
       result = this.allocate_bytes(Uint8Array.from([0]));
+    } else {
+      result = this.allocate_bytes(Uint8Array.from([1]));
     }
     return result;
   }
@@ -342,19 +342,15 @@ export class CosmWasmVM {
   ): Region {
     let result: Region;
     const message_str = Buffer.from(message.b64, 'base64').toString('binary');
-    const signature_str = this.eddsa.makeSignature(signature.b64);
-    const pubkey_str = this.eddsa.keyFromPublic(pubkey.b64);
+    const sig = this.eddsa.makeSignature(signature.read().toString());
+    const pubKey = this.eddsa.keyFromPublic(pubkey.read().toString());
 
-    const isValidSignature = this.eddsa.verify(
-      message_str,
-      signature_str,
-      pubkey_str
-    );
+    const isValidSignature = this.eddsa.verify(message_str, sig, pubKey);
 
     if (isValidSignature) {
-      result = this.allocate_bytes(Uint8Array.from([1]));
-    } else {
       result = this.allocate_bytes(Uint8Array.from([0]));
+    } else {
+      result = this.allocate_bytes(Uint8Array.from([1]));
     }
     return result;
   }
