@@ -2,27 +2,26 @@
 /*eslint-disable no-unused-vars*/
 import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
-import { IStore, BasicKVStore } from './store';
+import { IStorage, BasicKVStorage } from './backend/storage';
 import { ecdsaVerify } from 'secp256k1';
 import { eddsa } from 'elliptic';
+
+import { IBackend } from './backend';
 
 export class VMInstance {
   public PREFIX: string = 'cosmos1';
   public instance?: WebAssembly.Instance;
-  public store: IStore;
+  public backend: IBackend;
   public bech32: BechLib;
   public eddsa: eddsa;
 
-  constructor() {
-    this.store = new BasicKVStore();
+  constructor(backend: IBackend) {
+    this.backend = backend;
     this.bech32 = bech32;
     this.eddsa = new eddsa('ed25519');
   }
 
-  public async build(wasmByteCode: ArrayBuffer, store?: IStore) {
-    if (store !== undefined) {
-      this.store = store;
-    }
+  public async build(wasmByteCode: ArrayBuffer) {
     let imports = {
       env: {
         db_read: this.db_read.bind(this),
@@ -226,7 +225,7 @@ export class VMInstance {
   }
 
   protected do_db_read(key: Region): Region {
-    let value = this.store.get(key.data);
+    let value = this.backend.storage.get(key.data);
     let result: Region;
     if (value === null) {
       console.log(`db_read: key not found: ${key.str}`);
@@ -241,11 +240,11 @@ export class VMInstance {
 
   protected do_db_write(key: Region, value: Region) {
     console.log(`db_write ${key.str} => ${value.str}`);
-    this.store.set(key.data, value.data);
+    this.backend.storage.set(key.data, value.data);
   }
 
   protected do_db_remove(key: Region) {
-    this.store.remove(key.data);
+    this.backend.storage.remove(key.data);
   }
 
   protected do_db_scan(start: Region, end: Region, order: number): Region {

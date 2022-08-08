@@ -1,11 +1,18 @@
 import { readFileSync } from 'fs';
 import { VMInstance } from '../src';
+import { IBackend, BasicKVStorage } from '../src';
 import { bech32 } from 'bech32';
 import { toBase64 } from '@cosmjs/encoding';
 import { eddsa as EDDSA } from 'elliptic';
 
-const wasm_byte_code = readFileSync('./cosmwasm_vm_test.wasm');
-const vm = new VMInstance();
+const wasm_byte_code = readFileSync('testdata/cosmwasm_vm_test.wasm');
+const backend: IBackend = {
+  backend_api: BasicBackendApi(),
+  storage: new BasicKVStorage(),
+  querier: new BasicQuerier(),
+};
+const vm = new VMInstance(backend);
+
 
 /* Constants from https://github.com/cosmwasm/cosmwasm/blob/5e04c3c1aa7e278626196de43aa18e9bedbc6000/packages/vm/src/imports.rs#L499 */
 const KEY1 = 'ant';
@@ -50,7 +57,7 @@ describe('CosmWasmVM', () => {
 
     const chain = vm.instantiate(mock_env, mock_info, { count: 20 });
     console.log(chain.json);
-    console.log(vm.store);
+    console.log(vm.backend);
     const actual = {
       ok: {
         attributes: [
@@ -76,7 +83,7 @@ describe('CosmWasmVM', () => {
     let chain = vm.instantiate(mock_env, mock_info, { count: 20 });
     chain = vm.execute(mock_env, mock_info, { increment: {} });
     console.log(chain.json);
-    console.log(vm.store);
+    console.log(vm.backend);
     const expected = {
       ok: {
         attributes: [{ key: 'method', value: 'try_increment' }],
