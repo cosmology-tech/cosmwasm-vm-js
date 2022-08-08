@@ -2,20 +2,20 @@
 /*eslint-disable no-unused-vars*/
 import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
-import { KVStore } from './store';
+import { IStore, BasicKVStore } from './store';
 import { ecdsaVerify } from 'secp256k1';
 import { eddsa } from 'elliptic';
 
-export class CosmWasmVM {
+export class VMInstance {
   public PREFIX: string = 'cosmos1';
   public instance: WebAssembly.Instance;
-  public store: KVStore;
+  public store: IStore;
   public bech32: BechLib;
   public eddsa: eddsa;
 
-  constructor(public wasmByteCode: ArrayBuffer, store?: KVStore) {
+  constructor(public wasmByteCode: ArrayBuffer, store?: IStore) {
     if (store === undefined) {
-      store = new KVStore();
+      store = new BasicKVStore();
     }
     this.store = store;
     let imports = {
@@ -220,14 +220,14 @@ export class CosmWasmVM {
   }
 
   protected do_db_read(key: Region): Region {
-    let value = this.store.get(key.b64);
+    let value = this.store.get(key.data);
     let result: Region;
-    if (value === undefined) {
+    if (value === null) {
       console.log(`db_read: key not found: ${key.str}`);
       result = this.allocate_bytes(Uint8Array.from([0]));
     } else {
       console.log(`db_read: key found: ${key.str}`);
-      result = this.allocate_b64(value);
+      result = this.allocate_bytes(value);
     }
     console.log(`db_read: ${key.str} => ${result.str}`);
     return result;
@@ -235,11 +235,11 @@ export class CosmWasmVM {
 
   protected do_db_write(key: Region, value: Region) {
     console.log(`db_write ${key.str} => ${value.str}`);
-    this.store.set(key.b64, value.b64);
+    this.store.set(key.data, value.data);
   }
 
   protected do_db_remove(key: Region) {
-    this.store.delete(key.b64);
+    this.store.remove(key.data);
   }
 
   protected do_db_scan(start: Region, end: Region, order: number): Region {
