@@ -1,10 +1,17 @@
 import { readFileSync } from 'fs';
 import { VMInstance } from '../src';
+import { IBackend, BasicKVStorage } from '../src';
 import { bech32 } from 'bech32';
 import { toBase64 } from '@cosmjs/encoding';
 import { eddsa as EDDSA } from 'elliptic';
 
-const wasm_byte_code = readFileSync('./cosmwasm_vm_test.wasm');
+const wasm_byte_code = readFileSync('testdata/cosmwasm_vm_test.wasm');
+const backend: IBackend = {
+  backend_api: BasicBackendApi(),
+  storage: new BasicKVStorage(),
+  querier: new BasicQuerier(),
+};
+
 const vm = new VMInstance(wasm_byte_code);
 const mock_env = {
   block: {
