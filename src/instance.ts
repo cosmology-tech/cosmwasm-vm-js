@@ -1,8 +1,6 @@
 /*eslint-disable prefer-const */
-/*eslint-disable no-unused-vars*/
 import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
-import { IStorage, BasicKVStorage } from './backend/storage';
 import { ecdsaVerify } from 'secp256k1';
 import { eddsa } from 'elliptic';
 
@@ -264,7 +262,7 @@ export class VMInstance {
       this.PREFIX,
       this.bech32.toWords(canonical)
     );
-    destination = this.allocate_str(human);
+    this.allocate_str(human);
     return new Region(this.exports.memory, 0);
   }
 
@@ -276,7 +274,7 @@ export class VMInstance {
     const canonical = this.bech32.fromWords(
       this.bech32.decode(source.str).words
     );
-    destination = this.allocate_bytes(Buffer.from(canonical));
+    this.allocate_bytes(Buffer.from(canonical));
     return new Region(this.exports.memory, 0);
   }
 

@@ -1,3 +1,1 @@
-export class Env {
-}
-
+export class Env {}

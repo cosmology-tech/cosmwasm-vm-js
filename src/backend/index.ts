@@ -1,8 +1,8 @@
-import * as BackendApi from './backend-api';
+import * as BackendApi from './backendApi';
 import * as Querier from './querier';
 import * as Storage from './storage';
 
-export * from './backend-api';
+export * from './backendApi';
 export * from './querier';
 export * from './storage';
 
