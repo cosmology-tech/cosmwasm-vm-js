@@ -47,7 +47,6 @@ describe('CosmWasmVM', () => {
       },
     };
     expect(chain.json).toEqual(actual);
-    // expect(vm.store.size).toEqual(2);
   });
 
   it('execute', () => {
@@ -57,7 +56,13 @@ describe('CosmWasmVM', () => {
     console.log(vm.backend.storage);
     const expected = {
       ok: {
-        attributes: [{ key: 'method', value: 'try_increment' }],
+        attributes: [
+          { key: 'method', value: 'try_increment' },
+          {
+            key: 'owner',
+            value: 'terra1337xewwfv3jdjuz8e0nea9vd8dpugc0k2dcyt3',
+          },
+        ],
         data: null,
         events: [],
         messages: [],
