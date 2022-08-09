@@ -7,7 +7,7 @@ import { eddsa } from 'elliptic';
 import { IBackend } from './backend';
 
 export class VMInstance {
-  public PREFIX: string = 'cosmos1';
+  public PREFIX: string = 'terra';
   public instance?: WebAssembly.Instance;
   public backend: IBackend;
   public bech32: BechLib;
