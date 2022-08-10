@@ -9,6 +9,7 @@ import {
 import { Region, VMInstance } from '../src';
 import { fromHex, toAscii, toUtf8 } from '@cosmjs/encoding';
 
+// In Rust, b"XXX" is the same as creating a bytestring of the ASCII-encoded string "XXX".
 const KEY1 = toAscii('ant');
 const VALUE1 = toAscii('insect');
 const KEY2 = toAscii('tree');
@@ -29,10 +30,6 @@ const ECDSA_PUBKEY_HEX =
 const EDDSA_MSG_HEX = '';
 const EDDSA_SIG_HEX =
   'e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b';
-
-const hexToBytes = (hex: string): Uint8Array => {
-  return Uint8Array.from(Buffer.from(hex, 'hex'));
-};
 
 const createVM = (): VMInstance => {
   const wasm_byte_code = readFileSync('testdata/hackatom.wasm');
