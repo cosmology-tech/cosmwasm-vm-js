@@ -222,12 +222,12 @@ export class VMInstance {
     return new Region(this.exports.memory, ptr);
   }
 
-  protected do_db_read(key: Region): Region {
+  do_db_read(key: Region): Region {
     let value = this.backend.storage.get(key.data);
     let result: Region;
     if (value === null) {
       console.log(`db_read: key not found: ${key.str}`);
-      result = this.allocate_bytes(Uint8Array.from([0]));
+      result = this.region(0);
     } else {
       console.log(`db_read: key found: ${key.str}`);
       result = this.allocate_bytes(value);
@@ -236,7 +236,7 @@ export class VMInstance {
     return result;
   }
 
-  protected do_db_write(key: Region, value: Region) {
+  do_db_write(key: Region, value: Region) {
     console.log(`db_write ${key.str} => ${value.str}`);
     this.backend.storage.set(key.data, value.data);
   }
@@ -262,24 +262,27 @@ export class VMInstance {
       this.bech32.decode(source.str).words
     );
 
-    // TODO: Change prefix to be configurable per environment
-    const human = this.bech32.encode(
-      this.PREFIX,
-      this.bech32.toWords(canonical)
+    let result = this.backend.backend_api.human_address(
+      Uint8Array.from(canonical)
     );
-    this.allocate_str(human);
+
+    destination.write_str(result);
+
+    // TODO: add error handling; -- 0 = success, anything else is a pointer to an error message
     return new Region(this.exports.memory, 0);
   }
 
   protected do_addr_canonicalize(source: Region, destination: Region): Region {
-    if (source.str.length === 0) {
-      throw new Error('Empty address.');
+    let source_data = source.str;
+
+    if (source_data.length === 0) {
+      throw new Error('Input is empty.');
     }
 
-    const canonical = this.bech32.fromWords(
-      this.bech32.decode(source.str).words
-    );
-    this.allocate_bytes(Buffer.from(canonical));
+    let result = this.backend.backend_api.canonical_address(source_data);
+
+    destination.write(result);
+
     return new Region(this.exports.memory, 0);
   }
 

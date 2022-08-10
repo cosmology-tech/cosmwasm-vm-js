@@ -1,4 +1,4 @@
-import { toBase64 } from '@cosmjs/encoding';
+import { fromBase64, toBase64 } from '@cosmjs/encoding';
 
 export interface IStorage {
   get(key: Uint8Array): Uint8Array | null;
@@ -30,10 +30,11 @@ export class BasicKVStorage implements IStorage {
   get(key: Uint8Array): Uint8Array | null {
     const keyStr = toBase64(key);
     const value = this.dict[keyStr];
-    if (value !== undefined) {
-      return Buffer.from(value);
+    if (value === undefined) {
+      return null;
     }
-    return null;
+
+    return fromBase64(value);
   }
 
   set(key: Uint8Array, value: Uint8Array): void {

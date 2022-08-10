@@ -34,13 +34,10 @@ export interface IBackendApi {
 }
 
 export class BasicBackendApi implements BasicBackendApi {
-  public GAS_COST_CANONICALIZE = 55;
+  // public GAS_COST_CANONICALIZE = 55;
   public CANONICAL_LENGTH = 54;
-  public bech32_prefix: string;
 
-  constructor(bech32_prefix: string = 'terra') {
-    this.bech32_prefix = bech32_prefix;
-  }
+  constructor(public bech32_prefix: string = 'terra') {}
 
   public canonical_address(human: string): Uint8Array {
     if (human.length === 0) {
