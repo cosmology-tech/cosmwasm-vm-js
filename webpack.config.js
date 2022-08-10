@@ -38,7 +38,7 @@ const webConfig = {
   output: {
     filename: 'bundle.js',
     libraryTarget: 'umd',
-    library: 'cwsc',
+    library: 'cosmwasm-vm-js',
   },
   resolve: {
     ...commonConfig.resolve,
@@ -47,6 +47,7 @@ const webConfig = {
       buffer: require.resolve('buffer'),
       assert: require.resolve('assert'),
       'process/browser': require.resolve('process'),
+      util: require.resolve('util'),
     },
   },
   plugins: [

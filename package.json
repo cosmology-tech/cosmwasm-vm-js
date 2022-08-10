@@ -12,10 +12,7 @@
   ],
   "scripts": {
     "build": "tsc --module commonjs && webpack --mode production",
-    "lint": "dts lint",
-    "prepare": "dts build",
     "size": "size-limit",
-    "start": "dts watch",
     "test": "dts test",
     "//degit:contracts": "cd contracts && npx degit CosmWasm/cosmwasm/contracts/hackatom#0.16 hackatom"
   },
@@ -71,6 +68,8 @@
   },
   "dependencies": {
     "elliptic": "^6.5.4",
-    "secp256k1": "^4.0.3"
+    "process": "^0.11.10",
+    "secp256k1": "^4.0.3",
+    "util": "^0.12.4"
   }
 }
