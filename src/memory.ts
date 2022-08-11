@@ -1,4 +1,3 @@
-import { TextEncoder, TextDecoder } from 'util';
 /**
  * Wrapper class for the Region data structure, which describes a region of
  * WebAssembly's linear memory that has been allocated by the VM.
@@ -15,7 +14,7 @@ export class Region {
 
   /**
    * @param memory The WebAssembly.Memory object that this region is associated
-   * @param ptr The offset of the region's data structure in memory
+   * @param ptr The offset of the region's data structure in mmory
    */
   constructor(public memory: WebAssembly.Memory, public ptr: number) {
     this.region_info = new Uint32Array(memory.buffer, ptr, 3);
