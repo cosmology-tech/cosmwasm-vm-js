@@ -14,6 +14,7 @@
     "build": "tsc --module commonjs && webpack --mode production",
     "size": "size-limit",
     "test": "dts test",
+    "lint": "dts lint",
     "//degit:contracts": "cd contracts && npx degit CosmWasm/cosmwasm/contracts/hackatom#0.16 hackatom"
   },
   "husky": {

@@ -7,7 +7,7 @@ import {
   IBackend,
 } from '../src/backend';
 import { Region, VMInstance } from '../src';
-import { fromHex, toAscii, toUtf8 } from '@cosmjs/encoding';
+import { toAscii } from '@cosmjs/encoding';
 
 // In Rust, b"XXX" is the same as creating a bytestring of the ASCII-encoded string "XXX".
 const KEY1 = toAscii('ant');
@@ -39,7 +39,7 @@ const createVM = (): VMInstance => {
     querier: new BasicQuerier(),
   };
 
-  let vm = new VMInstance(wasm_byte_code, backend);
+  const vm = new VMInstance(wasm_byte_code, backend);
   vm.backend.storage.set(KEY1, VALUE1);
   vm.backend.storage.set(KEY2, VALUE2);
   return vm;
@@ -81,8 +81,8 @@ const MSG = {
 describe('do_db_read', () => {
   it('works', () => {
     const vm = createVM();
-    let key_ptr = writeData(vm, KEY1);
-    let result = vm.do_db_read(key_ptr);
+    const key_ptr = writeData(vm, KEY1);
+    const result = vm.do_db_read(key_ptr);
 
     expect(result.ptr).toBeGreaterThan(0);
     expect(result.data).toEqual(VALUE1);
@@ -90,8 +90,8 @@ describe('do_db_read', () => {
 
   it('works for non-existent key', () => {
     const vm = createVM();
-    let key_ptr = writeData(vm, toAscii('I do not exist in storage'));
-    let result = vm.do_db_read(key_ptr);
+    const key_ptr = writeData(vm, toAscii('I do not exist in storage'));
+    const result = vm.do_db_read(key_ptr);
 
     expect(result.ptr).toEqual(0);
   });
@@ -103,42 +103,79 @@ describe('do_db_write', () => {
   it('works', () => {
     const vm = createVM();
 
-    let key_ptr = writeData(vm, toAscii('new storage key'));
-    let value_ptr = writeData(vm, toAscii('new value'));
+    const key_ptr = writeData(vm, toAscii('new storage key'));
+    const value_ptr = writeData(vm, toAscii('new value'));
 
     vm.do_db_write(key_ptr, value_ptr);
-    let val = vm.backend.storage.get(toAscii('new storage key'));
+    const val = vm.backend.storage.get(toAscii('new storage key'));
     expect(val).toEqual(toAscii('new value'));
   });
 
   it('can override', () => {
     const vm = createVM();
 
-    let key_ptr = writeData(vm, KEY1);
-    let value_ptr = writeData(vm, VALUE2);
+    const key_ptr = writeData(vm, KEY1);
+    const value_ptr = writeData(vm, VALUE2);
 
     vm.do_db_write(key_ptr, value_ptr);
-    let val = vm.backend.storage.get(KEY1);
+    const val = vm.backend.storage.get(KEY1);
     expect(val).toEqual(VALUE2);
   });
   it('works for empty value', () => {
     const vm = createVM();
 
-    let key_ptr = writeData(vm, toAscii('new storage key'));
-    let value_ptr = writeData(vm, toAscii(''));
+    const key_ptr = writeData(vm, toAscii('new storage key'));
+    const value_ptr = writeData(vm, toAscii(''));
     vm.do_db_write(key_ptr, value_ptr);
 
-    let val = vm.backend.storage.get(toAscii('new storage key'));
+    const val = vm.backend.storage.get(toAscii('new storage key'));
     expect(val).toEqual(toAscii(''));
   });
 
-  // TODO: fails for large key
-  // TODO: fails for large value
+  it('fails for large key', () => {
+    try {
+      const vm = createVM();
+      const key_ptr = writeData(vm, toAscii('new storage key'));
+      const value_ptr = writeData(vm, toAscii('x'.repeat(1025)));
+      vm.do_db_write(key_ptr, value_ptr);
+    } catch (e) {
+      expect(e).toEqual(
+        new Error('db_write: value too large: ' + 'x'.repeat(1025))
+      );
+    }
+  });
+
+  it('fails for large value', () => {
+    try {
+      const vm = createVM();
+      const key_ptr = writeData(vm, toAscii('new storage key'.repeat(1025)));
+      const value_ptr = writeData(vm, toAscii(''));
+      vm.do_db_write(key_ptr, value_ptr);
+    } catch (e) {
+      expect(e).toEqual(
+        new Error('db_write: key too large: ' + 'new storage key'.repeat(1025))
+      );
+    }
+  });
+
   // TODO: is prohibited in readonly contexts
 });
 
 describe('do_db_remove', () => {
-  it('works', () => {});
+  it('works', () => {
+    const vm = createVM();
+    const key_ptr = writeData(vm, toAscii('new storage key'));
+    const value_ptr = writeData(vm, toAscii('x'));
+    vm.do_db_write(key_ptr, value_ptr);
+
+    let val = vm.backend.storage.get(toAscii('new storage key'));
+    expect(val).toEqual(toAscii('x'));
+
+    vm.backend.storage.remove(toAscii('new storage key'));
+    val = vm.backend.storage.get(toAscii('new storage key'));
+    expect(val).toEqual(null);
+  });
+
   it('is prohibited in readonly contexts', () => {});
 });
 

@@ -238,6 +238,14 @@ export class VMInstance {
 
   do_db_write(key: Region, value: Region) {
     console.log(`db_write ${key.str} => ${value.str}`);
+    // throw error for large keys
+    if (key.data.length > 1024) {
+      throw new Error(`db_write: key too large: ${key.str}`);
+    }
+
+    if (value.data.length > 1024) {
+      throw new Error(`db_write: value too large: ${value.str}`);
+    }
     this.backend.storage.set(key.data, value.data);
   }
 
