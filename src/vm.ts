@@ -15,8 +15,7 @@ export class CosmWasmVM {
     this.bech32 = bech32;
   }
 
-  
-  public async build(wasmByteCode: ArrayBuffer, store?: KVStore){
+  public async build(wasmByteCode: ArrayBuffer, store?: KVStore) {
     if (store !== undefined) {
       this.store = store;
     }
@@ -45,7 +44,8 @@ export class CosmWasmVM {
   }
 
   protected get exports(): any {
-    if (!this.instance) throw new Error("Please init instance before using methods");
+    if (!this.instance)
+      throw new Error('Please init instance before using methods');
     return this.instance!.exports;
   }
 
