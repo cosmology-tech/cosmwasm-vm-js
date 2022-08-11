@@ -8,6 +8,10 @@ import { IBackend } from './backend';
 
 export class VMInstance {
   public PREFIX: string = 'terra';
+  public MAX_LENGTH_DB_KEY: number = 64 * 1024;
+  public MAX_LENGTH_DB_VALUE: number = 128 * 1024;
+  public MAX_LENGTH_CANONICAL_ADDRESS = 64;
+  public MAX_LENGTH_HUMAN_ADDRESS = 256;
   public instance?: WebAssembly.Instance;
   public backend: IBackend;
   public bech32: BechLib;
@@ -239,11 +243,11 @@ export class VMInstance {
   do_db_write(key: Region, value: Region) {
     console.log(`db_write ${key.str} => ${value.str}`);
     // throw error for large keys
-    if (key.data.length > 1024) {
+    if (key.str.length > this.MAX_LENGTH_DB_KEY) {
       throw new Error(`db_write: key too large: ${key.str}`);
     }
 
-    if (value.data.length > 1024) {
+    if (value.data.length > this.MAX_LENGTH_DB_VALUE) {
       throw new Error(`db_write: value too large: ${value.str}`);
     }
     this.backend.storage.set(key.data, value.data);
@@ -269,6 +273,10 @@ export class VMInstance {
     const canonical = this.bech32.fromWords(
       this.bech32.decode(source.str).words
     );
+
+    if (canonical.length > this.MAX_LENGTH_CANONICAL_ADDRESS) {
+      throw new Error(`Address too large: ${source.str}`);
+    }
 
     let result = this.backend.backend_api.human_address(
       Uint8Array.from(canonical)
@@ -297,6 +305,10 @@ export class VMInstance {
   protected do_addr_validate(source: Region): Region {
     if (source.str.length === 0) {
       throw new Error('Empty address.');
+    }
+
+    if (source.str.length > this.MAX_LENGTH_HUMAN_ADDRESS) {
+      throw new Error(`Address too large: ${source.str}`);
     }
 
     const canonical = this.bech32.fromWords(
