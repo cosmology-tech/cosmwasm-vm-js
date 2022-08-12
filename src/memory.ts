@@ -1,4 +1,3 @@
-import { TextEncoder, TextDecoder } from 'util';
 /**
  * Wrapper class for the Region data structure, which describes a region of
  * WebAssembly's linear memory that has been allocated by the VM.

@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { CosmWasmVM } from '../src';
 
 const wasm_byte_code = readFileSync('./cosmwasm_vm_test.wasm');
-const vm = new CosmWasmVM(wasm_byte_code);
+const vm = new CosmWasmVM();
 
 const mock_env = {
   block: {
@@ -21,13 +21,17 @@ const mock_info = {
 };
 
 describe('CosmWasmVM', () => {
-  it('instantiates', () => {
+  it('instantiates', async () => {
+    await vm.build(wasm_byte_code);
+
     const chain = vm.instantiate(mock_env, mock_info, { count: 20 });
     console.log(chain.json);
     console.log(vm.store);
   });
 
-  it('execute', () => {
+  it('execute', async () => {
+    await vm.build(wasm_byte_code);
+
     let chain = vm.instantiate(mock_env, mock_info, { count: 20 });
     chain = vm.execute(mock_env, mock_info, { increment: {} });
     console.log(chain.json);

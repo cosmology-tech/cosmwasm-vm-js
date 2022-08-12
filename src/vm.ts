@@ -5,15 +5,20 @@ import { Region } from './memory';
 import { KVStore } from './store';
 
 export class CosmWasmVM {
-  public instance: WebAssembly.Instance;
+  public instance?: WebAssembly.Instance;
   public store: KVStore;
   public bech32: BechLib;
+  public wasmByteCode?: ArrayBuffer;
 
-  constructor(public wasmByteCode: ArrayBuffer, store?: KVStore) {
-    if (store === undefined) {
-      store = new KVStore();
+  constructor() {
+    this.store = new KVStore();
+    this.bech32 = bech32;
+  }
+
+  public async build(wasmByteCode: ArrayBuffer, store?: KVStore) {
+    if (store !== undefined) {
+      this.store = store;
     }
-    this.store = store;
     let imports = {
       env: {
         db_read: this.db_read.bind(this),
@@ -33,16 +38,15 @@ export class CosmWasmVM {
       },
     };
 
-    this.instance = new WebAssembly.Instance(
-      new WebAssembly.Module(wasmByteCode),
-      imports
-    );
-
-    this.bech32 = bech32;
+    const result = await WebAssembly.instantiate(wasmByteCode, imports);
+    this.instance = result.instance;
+    this.wasmByteCode = wasmByteCode;
   }
 
   protected get exports(): any {
-    return this.instance.exports;
+    if (!this.instance)
+      throw new Error('Please init instance before using methods');
+    return this.instance!.exports;
   }
 
   public allocate(size: number): Region {
