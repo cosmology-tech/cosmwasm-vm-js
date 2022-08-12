@@ -14,7 +14,6 @@ export class Environment {
       console.log('No arguments passed');
     }
 
-
     return {};
   }
 }

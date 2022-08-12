@@ -44,12 +44,8 @@ export class VMInstance {
       },
     };
 
-    this.instance = new WebAssembly.Instance(
-      new WebAssembly.Module(wasmByteCode),
-      imports
-    );
-
-
+    const result = await WebAssembly.instantiate(wasmByteCode, imports);
+    this.instance = result.instance;
   }
 
   protected get exports(): any {
