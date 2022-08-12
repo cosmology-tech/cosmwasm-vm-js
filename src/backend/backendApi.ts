@@ -47,11 +47,11 @@ export class BasicBackendApi implements BasicBackendApi {
     const normalized = normalizeBech32(human);
 
     if (normalized.length < 3) {
-      throw new Error(`Address too short: ${normalized}`);
+      throw new Error(`canonical_address: Address too short: ${normalized}`);
     }
 
     if (normalized.length > this.CANONICAL_LENGTH) {
-      throw new Error(`Address too long: ${normalized}`);
+      throw new Error(`canonical_address: Address too long: ${normalized}`);
     }
 
     return fromBech32(normalized).data;
@@ -59,12 +59,12 @@ export class BasicBackendApi implements BasicBackendApi {
 
   public human_address(canonical: Uint8Array): string {
     if (canonical.length === 0) {
-      throw new Error('Empty canonical address');
+      throw new Error('human_address: Empty canonical address');
     }
 
     if (canonical.length != this.CANONICAL_LENGTH) {
       throw new Error(
-        `Invalid input: canonical address length not correct: ${canonical.length}`
+        `human_address: canonical address length not correct: ${canonical.length}`
       );
     }
 

@@ -225,6 +225,11 @@ export class VMInstance {
   do_db_read(key: Region): Region {
     let value = this.backend.storage.get(key.data);
     let result: Region;
+
+    if (key.str.length > this.MAX_LENGTH_DB_KEY) {
+      throw new Error(`Key too long: ${key.str}`);
+    }
+
     if (value === null) {
       console.log(`db_read: key not found: ${key.str}`);
       result = this.region(0);
@@ -243,7 +248,7 @@ export class VMInstance {
       throw new Error(`db_write: key too large: ${key.str}`);
     }
 
-    if (value.data.length > this.MAX_LENGTH_DB_VALUE) {
+    if (value.str.length > this.MAX_LENGTH_DB_VALUE) {
       throw new Error(`db_write: value too large: ${value.str}`);
     }
     this.backend.storage.set(key.data, value.data);
@@ -332,13 +337,10 @@ export class VMInstance {
     pubkey: Region
   ): Region {
     let result: Region;
-    const hash_bytes = Buffer.from(hash.b64, 'base64');
-    const signature_bytes = Buffer.from(signature.b64, 'base64');
-    const pubkey_bytes = Buffer.from(pubkey.b64, 'base64');
     const isValidSignature = ecdsaVerify(
-      hash_bytes,
-      signature_bytes,
-      pubkey_bytes
+      hash.data,
+      signature.data,
+      pubkey.data
     );
 
     if (isValidSignature) {

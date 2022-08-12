@@ -6,6 +6,8 @@ export interface IStorage {
   set(key: Uint8Array, value: Uint8Array): void;
 
   remove(key: Uint8Array): void;
+
+  clear(): void;
 }
 
 export enum Order {
@@ -44,5 +46,11 @@ export class BasicKVStorage implements IStorage {
 
   remove(key: Uint8Array): void {
     this.dict[toBase64(key)] = undefined;
+  }
+
+  clear() {
+    Object.keys(this.dict).forEach((key) => {
+      delete this.dict[key];
+    });
   }
 }
