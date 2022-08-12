@@ -1,3 +1,4 @@
 export * from './memory';
-export * from './store';
-export * from './vm';
+export * from './backend/storage';
+export * from './instance';
+export * from './environment';

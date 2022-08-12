@@ -1,24 +1,29 @@
 /*eslint-disable prefer-const */
-/*eslint-disable no-unused-vars*/
 import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
-import { KVStore } from './store';
+import { ecdsaVerify } from 'secp256k1';
+import { eddsa } from 'elliptic';
 
-export class CosmWasmVM {
+import { IBackend } from './backend';
+
+export class VMInstance {
+  public PREFIX: string = 'terra';
+  public MAX_LENGTH_DB_KEY: number = 64 * 1024;
+  public MAX_LENGTH_DB_VALUE: number = 128 * 1024;
+  public MAX_LENGTH_CANONICAL_ADDRESS = 64;
+  public MAX_LENGTH_HUMAN_ADDRESS = 256;
   public instance?: WebAssembly.Instance;
-  public store: KVStore;
+  public backend: IBackend;
   public bech32: BechLib;
-  public wasmByteCode?: ArrayBuffer;
+  public eddsa: eddsa;
 
-  constructor() {
-    this.store = new KVStore();
+  constructor(backend: IBackend) {
+    this.backend = backend;
     this.bech32 = bech32;
+    this.eddsa = new eddsa('ed25519');
   }
 
-  public async build(wasmByteCode: ArrayBuffer, store?: KVStore) {
-    if (store !== undefined) {
-      this.store = store;
-    }
+  public async build(wasmByteCode: ArrayBuffer) {
     let imports = {
       env: {
         db_read: this.db_read.bind(this),
@@ -35,12 +40,12 @@ export class CosmWasmVM {
         ed25519_batch_verify: this.ed25519_batch_verify.bind(this),
         debug: this.debug.bind(this),
         query_chain: this.query_chain.bind(this),
+        abort: this.abort.bind(this),
       },
     };
 
     const result = await WebAssembly.instantiate(wasmByteCode, imports);
     this.instance = result.instance;
-    this.wasmByteCode = wasmByteCode;
   }
 
   protected get exports(): any {
@@ -207,31 +212,45 @@ export class CosmWasmVM {
     return this.do_query_chain(request).ptr;
   }
 
+  abort(message_ptr: number, file_ptr: number, line: number, column: number) {
+    let message = this.region(message_ptr);
+    let file = this.region(file_ptr);
+    this.do_abort(message, file, line, column);
+  }
+
   public region(ptr: number): Region {
     return new Region(this.exports.memory, ptr);
   }
 
-  protected do_db_read(key: Region): Region {
-    let value = this.store.get(key.b64);
+  do_db_read(key: Region): Region {
+    let value = this.backend.storage.get(key.data);
     let result: Region;
-    if (value === undefined) {
+    if (value === null) {
       console.log(`db_read: key not found: ${key.str}`);
-      result = this.allocate_bytes(Uint8Array.from([0]));
+      result = this.region(0);
     } else {
       console.log(`db_read: key found: ${key.str}`);
-      result = this.allocate_b64(value);
+      result = this.allocate_bytes(value);
     }
     console.log(`db_read: ${key.str} => ${result.str}`);
     return result;
   }
 
-  protected do_db_write(key: Region, value: Region) {
+  do_db_write(key: Region, value: Region) {
     console.log(`db_write ${key.str} => ${value.str}`);
-    this.store.set(key.b64, value.b64);
+    // throw error for large keys
+    if (key.str.length > this.MAX_LENGTH_DB_KEY) {
+      throw new Error(`db_write: key too large: ${key.str}`);
+    }
+
+    if (value.data.length > this.MAX_LENGTH_DB_VALUE) {
+      throw new Error(`db_write: value too large: ${value.str}`);
+    }
+    this.backend.storage.set(key.data, value.data);
   }
 
   protected do_db_remove(key: Region) {
-    this.store.delete(key.b64);
+    this.backend.storage.remove(key.data);
   }
 
   protected do_db_scan(start: Region, end: Region, order: number): Region {
@@ -243,19 +262,67 @@ export class CosmWasmVM {
   }
 
   protected do_addr_humanize(source: Region, destination: Region): Region {
-    throw new Error('not implemented');
-  }
+    if (source.str.length === 0) {
+      throw new Error('Empty address.');
+    }
 
-  protected do_addr_canonicalize(source: Region, destination: Region): Region {
     const canonical = this.bech32.fromWords(
       this.bech32.decode(source.str).words
     );
-    destination = this.allocate_bytes(Buffer.from(canonical));
+
+    if (canonical.length > this.MAX_LENGTH_CANONICAL_ADDRESS) {
+      throw new Error(`Address too large: ${source.str}`);
+    }
+
+    let result = this.backend.backend_api.human_address(
+      Uint8Array.from(canonical)
+    );
+
+    destination.write_str(result);
+
+    // TODO: add error handling; -- 0 = success, anything else is a pointer to an error message
+    return new Region(this.exports.memory, 0);
+  }
+
+  protected do_addr_canonicalize(source: Region, destination: Region): Region {
+    let source_data = source.str;
+
+    if (source_data.length === 0) {
+      throw new Error('Input is empty.');
+    }
+
+    let result = this.backend.backend_api.canonical_address(source_data);
+
+    destination.write(result);
+
     return new Region(this.exports.memory, 0);
   }
 
   protected do_addr_validate(source: Region): Region {
-    // TODO: do real check - bypass here is to simply return a zero pointer
+    if (source.str.length === 0) {
+      throw new Error('Empty address.');
+    }
+
+    if (source.str.length > this.MAX_LENGTH_HUMAN_ADDRESS) {
+      throw new Error(`Address too large: ${source.str}`);
+    }
+
+    const canonical = this.bech32.fromWords(
+      this.bech32.decode(source.str).words
+    );
+
+    if (canonical.length === 0) {
+      throw new Error('Invalid address.');
+    }
+
+    // TODO: Change prefix to be configurable per environment
+    const human = this.bech32.encode(
+      this.PREFIX,
+      this.bech32.toWords(canonical)
+    );
+    if (human !== source.str) {
+      throw new Error('Invalid address.');
+    }
     return new Region(this.exports.memory, 0);
   }
 
@@ -264,7 +331,22 @@ export class CosmWasmVM {
     signature: Region,
     pubkey: Region
   ): Region {
-    throw new Error('not implemented');
+    let result: Region;
+    const hash_bytes = Buffer.from(hash.b64, 'base64');
+    const signature_bytes = Buffer.from(signature.b64, 'base64');
+    const pubkey_bytes = Buffer.from(pubkey.b64, 'base64');
+    const isValidSignature = ecdsaVerify(
+      hash_bytes,
+      signature_bytes,
+      pubkey_bytes
+    );
+
+    if (isValidSignature) {
+      result = this.allocate_bytes(Uint8Array.from([1]));
+    } else {
+      result = this.allocate_bytes(Uint8Array.from([0]));
+    }
+    return result;
   }
 
   protected do_secp256k1_recover_pubkey(
@@ -280,7 +362,23 @@ export class CosmWasmVM {
     signature: Region,
     pubkey: Region
   ): Region {
-    throw new Error('not implemented');
+    let result: Region;
+    const message_str = Buffer.from(message.b64, 'base64').toString('binary');
+    const signature_str = this.eddsa.makeSignature(signature.b64);
+    const pubkey_str = this.eddsa.keyFromPublic(pubkey.b64);
+
+    const isValidSignature = this.eddsa.verify(
+      message_str,
+      signature_str,
+      pubkey_str
+    );
+
+    if (isValidSignature) {
+      result = this.allocate_bytes(Uint8Array.from([1]));
+    } else {
+      result = this.allocate_bytes(Uint8Array.from([0]));
+    }
+    return result;
   }
 
   protected do_ed25519_batch_verify(
@@ -297,5 +395,16 @@ export class CosmWasmVM {
 
   protected do_query_chain(request: Region): Region {
     throw new Error('not implemented');
+  }
+
+  protected do_abort(
+    message: Region,
+    file: Region,
+    line: number,
+    column: number
+  ) {
+    throw new Error(
+      `abort: ${message.read_str()} at ${file.read_str()}:${line}:${column}`
+    );
   }
 }

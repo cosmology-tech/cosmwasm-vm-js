@@ -5,4 +5,6 @@ dist
 .nova/
 .env
 target/
+.vscode/
+.idea/
 
