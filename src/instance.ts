@@ -187,7 +187,7 @@ export class VMInstance {
     let message = this.region(message_ptr);
     let signature = this.region(signature_ptr);
     let pubkey = this.region(pubkey_ptr);
-    return this.do_ed25519_verify(message, signature, pubkey).ptr;
+    return this.do_ed25519_verify(message, signature, pubkey);
   }
 
   ed25519_batch_verify(
@@ -350,24 +350,21 @@ export class VMInstance {
     message: Region,
     signature: Region,
     pubkey: Region
-  ): Region {
-    let result: Region;
-    const message_str = Buffer.from(message.b64, 'base64').toString('binary');
-    const signature_str = this.eddsa.makeSignature(signature.b64);
-    const pubkey_str = this.eddsa.keyFromPublic(pubkey.b64);
+  ): number {
+    const signature_str = this.eddsa.makeSignature(signature.str);
+    const pubkey_str = this.eddsa.keyFromPublic(pubkey.str);
 
     const isValidSignature = this.eddsa.verify(
-      message_str,
+      message.str,
       signature_str,
       pubkey_str
     );
 
     if (isValidSignature) {
-      result = this.allocate_bytes(Uint8Array.from([1]));
+      return 0;
     } else {
-      result = this.allocate_bytes(Uint8Array.from([0]));
+      return 1;
     }
-    return result;
   }
 
   do_ed25519_batch_verify(
