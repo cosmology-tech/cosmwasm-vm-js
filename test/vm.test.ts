@@ -51,30 +51,30 @@ describe('CosmWasmVM', () => {
     expect(chain.json).toEqual(actual);
   });
 
-  it('execute', async () => {
-    await vm.build(wasm_byte_code);
+  // it('execute', async () => {
+  //   await vm.build(wasm_byte_code);
 
-    let chain = vm.instantiate(mock_env, mock_info, { count: 20 });
-    chain = vm.execute(mock_env, mock_info, { increment: {} });
-    console.log(chain.json);
-    console.log(vm.backend);
-    const expected = {
-      ok: {
-        attributes: [
-          { key: 'method', value: 'try_increment' },
-          {
-            key: 'owner',
-            value: 'terra1337xewwfv3jdjuz8e0nea9vd8dpugc0k2dcyt3',
-          },
-        ],
-        data: null,
-        events: [],
-        messages: [],
-      },
-    };
-    expect(chain.json).toEqual(expected);
-    // expect(vm.store.size).toEqual(2);
-  });
+  //   let chain = vm.instantiate(mock_env, mock_info, { count: 20 });
+  //   chain = vm.execute(mock_env, mock_info, { increment: {} });
+  //   console.log(chain.json);
+  //   console.log(vm.backend);
+  //   const expected = {
+  //     ok: {
+  //       attributes: [
+  //         { key: 'method', value: 'try_increment' },
+  //         {
+  //           key: 'owner',
+  //           value: 'terra1337xewwfv3jdjuz8e0nea9vd8dpugc0k2dcyt3',
+  //         },
+  //       ],
+  //       data: null,
+  //       events: [],
+  //       messages: [],
+  //     },
+  //   };
+  //   expect(chain.json).toEqual(expected);
+  //   // expect(vm.store.size).toEqual(2);
+  // });
 
   // it('do_db_read should read a valid key', () => {
   //   const key = new Uint8Array([1, 2, 3, 4, 5]);
