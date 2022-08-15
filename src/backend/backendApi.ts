@@ -62,7 +62,7 @@ export class BasicBackendApi implements BasicBackendApi {
       throw new Error('human_address: Empty canonical address');
     }
 
-    if (canonical.length != this.CANONICAL_LENGTH) {
+    if (canonical.length !== this.CANONICAL_LENGTH) {
       throw new Error(
         `human_address: canonical address length not correct: ${canonical.length}`
       );

@@ -1,6 +1,11 @@
 /* Constants from https://github.com/cosmwasm/cosmwasm/blob/5e04c3c1aa7e278626196de43aa18e9bedbc6000/packages/vm/src/imports.rs#L499 */
 import { readFileSync } from 'fs';
-import { BasicBackendApi, BasicKVStorage, BasicQuerier, IBackend, } from '../src/backend';
+import {
+  BasicBackendApi,
+  BasicKVStorage,
+  BasicQuerier,
+  IBackend,
+} from '../src/backend';
 import { Region, VMInstance } from '../src';
 import { toAscii } from '@cosmjs/encoding';
 
@@ -9,9 +14,15 @@ const KEY1 = toAscii('ant');
 const VALUE1 = toAscii('insect');
 const KEY2 = toAscii('tree');
 const VALUE2 = toAscii('plant');
-const ECDSA_HASH_HEX = toAscii("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
-const ECDSA_SIG_HEX = toAscii("5ae8317d34d1e595e3fa7247db80c0af");
-const ECDSA_PUBKEY_HEX = toAscii("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73");
+const ECDSA_HASH_HEX = toAscii(
+  '5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0'
+);
+const ECDSA_SIG_HEX = toAscii(
+  'e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b'
+);
+const ECDSA_PUBKEY_HEX = toAscii(
+  'd75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a'
+);
 
 const createVM = async (): Promise<VMInstance> => {
   const wasm_byte_code = readFileSync('testdata/hackatom.wasm');
@@ -70,15 +81,15 @@ describe('do_db_read', () => {
   it('fails for large key', async () => {
     try {
       const key_ptr = writeData(
-          vm,
-          toAscii('I do not exist in storage'.repeat(65 * 1024))
+        vm,
+        toAscii('I do not exist in storage'.repeat(65 * 1024))
       );
       vm.do_db_read(key_ptr);
     } catch (e) {
       expect(e).toEqual(
-          new Error(
-              `Key too long: ${'I do not exist in storage'.repeat(65 * 1024)}`
-          )
+        new Error(
+          `Key too long: ${'I do not exist in storage'.repeat(65 * 1024)}`
+        )
       );
     }
   });
@@ -120,16 +131,16 @@ describe('do_db_write', () => {
   it('fails for large key', async () => {
     try {
       const key_ptr = writeData(
-          vm,
-          toAscii('new storage key'.repeat(69 * 1024))
+        vm,
+        toAscii('new storage key'.repeat(69 * 1024))
       );
       const value_ptr = writeData(vm, toAscii('x'));
       vm.do_db_write(key_ptr, value_ptr);
     } catch (e) {
       expect(e).toEqual(
-          new Error(
-              'db_write: key too large: ' + 'new storage key'.repeat(69 * 1024)
-          )
+        new Error(
+          'db_write: key too large: ' + 'new storage key'.repeat(69 * 1024)
+        )
       );
     }
   });
@@ -167,8 +178,7 @@ describe('do_db_remove', () => {
     expect(val).toEqual(null);
   });
 
-  it('is prohibited in readonly contexts', () => {
-  });
+  it('is prohibited in readonly contexts', () => {});
 });
 
 describe('do_addr_validate', () => {
@@ -179,8 +189,8 @@ describe('do_addr_validate', () => {
 
   it('works', async () => {
     const addr_ptr = writeData(
-        vm,
-        toAscii('terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76')
+      vm,
+      toAscii('terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76')
     );
     const result = vm.addr_validate(addr_ptr.ptr);
     expect(result).toEqual(0);
@@ -189,16 +199,16 @@ describe('do_addr_validate', () => {
   it('fails for invalid address', async () => {
     try {
       const addr_ptr = writeData(
-          vm,
-          toAscii('ggggg14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76')
+        vm,
+        toAscii('ggggg14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76')
       );
       const result = vm.addr_validate(addr_ptr.ptr);
       expect(result).toEqual(0);
     } catch (e) {
       expect(e).toEqual(
-          new Error(
-              'Invalid checksum for ggggg14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76'
-          )
+        new Error(
+          'Invalid checksum for ggggg14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76'
+        )
       );
     }
   });
@@ -212,20 +222,23 @@ describe('do_addr_canonicalize', () => {
 
   it('works', () => {
     const human_addr_region = writeData(
-        vm,
-        toAscii('terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76')
+      vm,
+      toAscii('terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76')
     );
-    const result = vm.addr_canonicalize(human_addr_region.ptr, vm.allocate(vm.MAX_LENGTH_CANONICAL_ADDRESS).ptr);
+    const result = vm.addr_canonicalize(
+      human_addr_region.ptr,
+      vm.allocate(vm.MAX_LENGTH_CANONICAL_ADDRESS).ptr
+    );
     expect(result).toEqual(0);
   });
 
   it('fails for smart inputs', () => {
     try {
-      const human_addr_region = writeData(
-          vm,
-          toAscii('terra')
+      const human_addr_region = writeData(vm, toAscii('terra'));
+      vm.addr_canonicalize(
+        human_addr_region.ptr,
+        vm.allocate(vm.MAX_LENGTH_CANONICAL_ADDRESS).ptr
       );
-      vm.addr_canonicalize(human_addr_region.ptr, vm.allocate(vm.MAX_LENGTH_CANONICAL_ADDRESS).ptr);
     } catch (e) {
       expect(e).toEqual(new Error('terra too short'));
     }
@@ -234,22 +247,34 @@ describe('do_addr_canonicalize', () => {
   it('fails for large inputs', () => {
     try {
       const human_addr_region = writeData(
-          vm,
-          toAscii('terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76dsafklsajdfkljsdaklfjklasdjklfjaklsdjfl')
+        vm,
+        toAscii(
+          'terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76dsafklsajdfkljsdaklfjklasdjklfjaklsdjfl'
+        )
       );
-      vm.addr_canonicalize(human_addr_region.ptr, vm.allocate(vm.MAX_LENGTH_CANONICAL_ADDRESS).ptr);
+      vm.addr_canonicalize(
+        human_addr_region.ptr,
+        vm.allocate(vm.MAX_LENGTH_CANONICAL_ADDRESS).ptr
+      );
     } catch (e) {
-      expect(e).toEqual(new Error('Invalid checksum for terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76dsafklsajdfkljsdaklfjklasdjklfjaklsdjfl'));
+      expect(e).toEqual(
+        new Error(
+          'Invalid checksum for terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76dsafklsajdfkljsdaklfjklasdjklfjaklsdjfl'
+        )
+      );
     }
   });
 
   it('fails for small destination region', () => {
     try {
       const human_addr_region = writeData(
-          vm,
-          toAscii('terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76')
+        vm,
+        toAscii('terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76')
       );
-      vm.addr_canonicalize(human_addr_region.ptr, vm.allocate(vm.MAX_LENGTH_CANONICAL_ADDRESS - 50).ptr);
+      vm.addr_canonicalize(
+        human_addr_region.ptr,
+        vm.allocate(vm.MAX_LENGTH_CANONICAL_ADDRESS - 50).ptr
+      );
     } catch (e) {
       expect(e).toEqual(new RangeError('offset is out of bounds'));
     }
@@ -264,44 +289,59 @@ describe('do_addr_humanize', () => {
 
   it('works', () => {
     const canonical_addr_region = writeData(
-        vm,
-        toAscii('bc1qc7slrfxkknqcq2jevvvkdgvrt80')
+      vm,
+      toAscii('bc1qc7slrfxkknqcq2jevvvkdgvrt80')
     );
-    const result = vm.addr_humanize(canonical_addr_region.ptr, vm.allocate(vm.MAX_LENGTH_HUMAN_ADDRESS).ptr);
+    const result = vm.addr_humanize(
+      canonical_addr_region.ptr,
+      vm.allocate(vm.MAX_LENGTH_HUMAN_ADDRESS).ptr
+    );
     expect(result).toEqual(0);
   });
 
   it('fails for invalid address', () => {
     try {
       const canonical_addr_region = writeData(
-          vm,
-          toAscii('terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq77')
+        vm,
+        toAscii('terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq77')
       );
-      vm.addr_humanize(canonical_addr_region.ptr, vm.allocate(vm.MAX_LENGTH_HUMAN_ADDRESS).ptr);
+      vm.addr_humanize(
+        canonical_addr_region.ptr,
+        vm.allocate(vm.MAX_LENGTH_HUMAN_ADDRESS).ptr
+      );
     } catch (e) {
-      expect(e).toEqual(new Error('Invalid checksum for terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq77'));
+      expect(e).toEqual(
+        new Error(
+          'Invalid checksum for terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq77'
+        )
+      );
     }
   });
 
   it('fails for too large address', () => {
     try {
       const canonical_addr_region = writeData(
-          vm,
-          toAscii('terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76')
+        vm,
+        toAscii('terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76')
       );
-      vm.addr_humanize(canonical_addr_region.ptr, vm.allocate(vm.MAX_LENGTH_HUMAN_ADDRESS).ptr);
+      vm.addr_humanize(
+        canonical_addr_region.ptr,
+        vm.allocate(vm.MAX_LENGTH_HUMAN_ADDRESS).ptr
+      );
     } catch (e) {
-      expect(e).toEqual(new Error('human_address: canonical address length not correct: 20'));
+      expect(e).toEqual(
+        new Error('human_address: canonical address length not correct: 20')
+      );
     }
   });
 
   it('fails for too short address', () => {
     try {
-      const canonical_addr_region = writeData(
-          vm,
-          toAscii('foobar')
+      const canonical_addr_region = writeData(vm, toAscii('foobar'));
+      vm.addr_humanize(
+        canonical_addr_region.ptr,
+        vm.allocate(vm.MAX_LENGTH_HUMAN_ADDRESS).ptr
       );
-      vm.addr_humanize(canonical_addr_region.ptr, vm.allocate(vm.MAX_LENGTH_HUMAN_ADDRESS).ptr);
     } catch (e) {
       expect(e).toEqual(new Error('foobar too short'));
     }
@@ -318,14 +358,35 @@ describe('do_secp256k1_verify', () => {
     const hash_ptr = writeData(vm, ECDSA_HASH_HEX);
     const sig_ptr = writeData(vm, ECDSA_SIG_HEX);
     const pubkey_ptr = writeData(vm, ECDSA_PUBKEY_HEX);
-    const result = vm.secp256k1_verify(hash_ptr.ptr, sig_ptr.ptr, pubkey_ptr.ptr);
+    const result = vm.secp256k1_verify(
+      hash_ptr.ptr,
+      sig_ptr.ptr,
+      pubkey_ptr.ptr
+    );
     expect(result).toEqual(0);
   });
-});
 
-describe('do_secp256k1_recover_pubkey', () => {
-  it('works', () => {
+  it('fails for invalid hash', () => {
+    try {
+      const hash_ptr = writeData(vm, new Uint8Array(0x20));
+      const sig_ptr = writeData(vm, ECDSA_SIG_HEX);
+      const pubkey_ptr = writeData(vm, ECDSA_PUBKEY_HEX);
+      vm.secp256k1_verify(hash_ptr.ptr, sig_ptr.ptr, pubkey_ptr.ptr);
+    } catch (e) {
+      expect(e).toEqual(new Error('Invalid hash'));
+    }
   });
+  it('fails for large hash', () => {});
+  it('fails for short hash', () => {});
+  it('fails for invalid signature', () => {});
+  it('fails for large signature', () => {});
+  it('fails for short signature', () => {});
+  it('fails for wrong pubkey format', () => {});
+  it('fails for invalid pubkey', () => {});
+  it('fails for large pubkey', () => {});
+  it('failes for short pubkey', () => {});
+  it('fails for empty pubkey', () => {});
+  it('fails for invalid data', () => {});
 });
 
 describe('do_ecdsa_verify', () => {
@@ -341,28 +402,39 @@ describe('do_ecdsa_verify', () => {
     const result = vm.ed25519_verify(hash_ptr.ptr, sig_ptr.ptr, pubkey_ptr.ptr);
     expect(result).toEqual(0);
   });
+
+  it('fails for invalid msg', () => {});
+  it('fails for large msg', () => {});
+  it('fails for short msg', () => {});
+  it('fails for invalid sig', () => {});
+  it('fails for large sig', () => {});
+  it('fails for short sig', () => {});
+  it('fails for invalid pubkey', () => {});
+  it('fails for large pubkey', () => {});
+  it('fails for short pubkey', () => {});
+  it('fails for empty pubkey', () => {});
+  it('fails for invalid data', () => {});
+});
+
+describe('do_secp256k1_recover_pubkey', () => {
+  it('works', () => {});
 });
 
 describe('do_query_chain', () => {
+  it('fails for missing contract', () => {});
 });
 
 describe('do_db_scan', () => {
-  it('unbound works', () => {
-  });
-  it('unbound descending works', () => {
-  });
-  it('bound works', () => {
-  });
-  it('bound descending works', () => {
-  });
-  it('multiple iterators', () => {
-  });
+  it('unbound works', () => {});
+  it('unbound descending works', () => {});
+  it('bound works', () => {});
+  it('bound descending works', () => {});
+  it('multiple iterators', () => {});
 });
 
-describe('do_db_query', () => {
-});
+describe('do_db_query', () => {});
 
 describe('do_db_next', () => {
-  it('works', () => {
-  });
+  it('works', () => {});
+  it('fails for non existent id', () => {});
 });
