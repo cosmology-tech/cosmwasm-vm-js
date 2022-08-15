@@ -7,21 +7,22 @@ import {
   IBackend,
 } from '../src/backend';
 import { Region, VMInstance } from '../src';
-import { toAscii } from '@cosmjs/encoding';
+import { fromHex, toAscii } from '@cosmjs/encoding';
+import secp256k1 from 'secp256k1';
 
 // In Rust, b"XXX" is the same as creating a bytestring of the ASCII-encoded string "XXX".
 const KEY1 = toAscii('ant');
 const VALUE1 = toAscii('insect');
 const KEY2 = toAscii('tree');
 const VALUE2 = toAscii('plant');
-const ECDSA_HASH_HEX = toAscii(
+const ECDSA_HASH_HEX = fromHex(
   '5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0'
 );
-const ECDSA_SIG_HEX = toAscii(
-  'e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b'
+const ECDSA_SIG_HEX = fromHex(
+  '207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4'
 );
-const ECDSA_PUBKEY_HEX = toAscii(
-  'd75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a'
+const ECDSA_PUBKEY_HEX = fromHex(
+  '04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73'
 );
 
 const createVM = async (): Promise<VMInstance> => {
@@ -146,10 +147,10 @@ describe('do_db_write', () => {
   });
 
   // The key is overridden by the value, so the value exception is never reached.
-  it.skip('fails for large value', async () => {
+  it('fails for large value', async () => {
     try {
       const key_ptr = writeData(vm, toAscii('new storage key'));
-      const value_ptr = writeData(vm, toAscii('x'.repeat(128 * 1024)));
+      const value_ptr = writeData(vm, toAscii('x'.repeat(129 * 1024)));
       vm.do_db_write(key_ptr, value_ptr);
     } catch (e: any) {
       expect(e.message).toContain('db_write: value too large:');
@@ -208,6 +209,24 @@ describe('do_addr_validate', () => {
       expect(e).toEqual(
         new Error(
           'Invalid checksum for ggggg14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76'
+        )
+      );
+    }
+  });
+
+  it('fails for large input', async () => {
+    try {
+      const addr_ptr = writeData(
+        vm,
+        toAscii('terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76'.repeat(1024))
+      );
+      const result = vm.addr_validate(addr_ptr.ptr);
+      expect(result).toEqual(0);
+    } catch (e) {
+      expect(e).toEqual(
+        new Error(
+          'Address too large: ' +
+            'terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76'.repeat(1024)
         )
       );
     }
@@ -279,6 +298,18 @@ describe('do_addr_canonicalize', () => {
       expect(e).toEqual(new RangeError('offset is out of bounds'));
     }
   });
+
+  it('fails for empty address', () => {
+    try {
+      const canonical_addr_region = writeData(vm, toAscii(''));
+      vm.addr_canonicalize(
+        canonical_addr_region.ptr,
+        vm.allocate(vm.MAX_LENGTH_HUMAN_ADDRESS).ptr
+      );
+    } catch (e) {
+      expect(e).toEqual(new Error('Empty address.'));
+    }
+  });
 });
 
 describe('do_addr_humanize', () => {
@@ -287,15 +318,11 @@ describe('do_addr_humanize', () => {
     vm = await createVM();
   });
 
+  // TODO: This is still failing for some reason.
   it('works', () => {
-    const canonical_addr_region = writeData(
-      vm,
-      toAscii('bc1qc7slrfxkknqcq2jevvvkdgvrt80')
-    );
-    const result = vm.addr_humanize(
-      canonical_addr_region.ptr,
-      vm.allocate(vm.MAX_LENGTH_HUMAN_ADDRESS).ptr
-    );
+    const canonical_addr_region = writeData(vm, new Uint8Array(54).fill(0x22));
+    const destination = vm.allocate(vm.MAX_LENGTH_HUMAN_ADDRESS);
+    const result = vm.do_addr_humanize(canonical_addr_region, destination);
     expect(result).toEqual(0);
   });
 
@@ -346,6 +373,18 @@ describe('do_addr_humanize', () => {
       expect(e).toEqual(new Error('foobar too short'));
     }
   });
+
+  it('fails for empty address', () => {
+    try {
+      const canonical_addr_region = writeData(vm, toAscii(''));
+      vm.addr_humanize(
+        canonical_addr_region.ptr,
+        vm.allocate(vm.MAX_LENGTH_HUMAN_ADDRESS).ptr
+      );
+    } catch (e) {
+      expect(e).toEqual(new Error('Empty address.'));
+    }
+  });
 });
 
 describe('do_secp256k1_verify', () => {
@@ -376,16 +415,98 @@ describe('do_secp256k1_verify', () => {
       expect(e).toEqual(new Error('Invalid hash'));
     }
   });
-  it('fails for large hash', () => {});
-  it('fails for short hash', () => {});
-  it('fails for invalid signature', () => {});
-  it('fails for large signature', () => {});
-  it('fails for short signature', () => {});
-  it('fails for wrong pubkey format', () => {});
+  it('fails for large hash', () => {
+    try {
+      const hash_ptr = writeData(vm, new Uint8Array(54 * 1024).fill(0x22));
+      const sig_ptr = writeData(vm, ECDSA_SIG_HEX);
+      const pubkey_ptr = writeData(vm, ECDSA_PUBKEY_HEX);
+      vm.secp256k1_verify(hash_ptr.ptr, sig_ptr.ptr, pubkey_ptr.ptr);
+    } catch (e) {
+      expect(e).toEqual(
+        new Error('Expected message to be an Uint8Array with length 32')
+      );
+    }
+  });
+
+  it('fails for short hash', () => {
+    try {
+      const hash_ptr = writeData(vm, new Uint8Array(1));
+      const sig_ptr = writeData(vm, ECDSA_SIG_HEX);
+      const pubkey_ptr = writeData(vm, ECDSA_PUBKEY_HEX);
+      vm.secp256k1_verify(hash_ptr.ptr, sig_ptr.ptr, pubkey_ptr.ptr);
+    } catch (e) {
+      expect(e).toEqual(
+        new Error('Expected message to be an Uint8Array with length 32')
+      );
+    }
+  });
+  it('fails for invalid signature', () => {
+    try {
+      const hash_ptr = writeData(vm, ECDSA_HASH_HEX);
+      const sig_ptr = writeData(vm, new Uint8Array(0x20));
+      const pubkey_ptr = writeData(vm, ECDSA_PUBKEY_HEX);
+      vm.secp256k1_verify(hash_ptr.ptr, sig_ptr.ptr, pubkey_ptr.ptr);
+    } catch (e) {
+      expect(e).toEqual(
+        new Error('Expected signature to be an Uint8Array with length 64')
+      );
+    }
+  });
+
+  it('fails for large signature', () => {
+    try {
+      const hash_ptr = writeData(vm, ECDSA_HASH_HEX);
+      const sig_ptr = writeData(vm, new Uint8Array(54 * 1024).fill(0x22));
+      const pubkey_ptr = writeData(vm, ECDSA_PUBKEY_HEX);
+      vm.secp256k1_verify(hash_ptr.ptr, sig_ptr.ptr, pubkey_ptr.ptr);
+    } catch (e) {
+      expect(e).toEqual(
+        new Error('Expected signature to be an Uint8Array with length 64')
+      );
+    }
+  });
+
+  it('fails for short signature', () => {
+    try {
+      const hash_ptr = writeData(vm, ECDSA_HASH_HEX);
+      const sig_ptr = writeData(vm, new Uint8Array(0));
+      const pubkey_ptr = writeData(vm, ECDSA_PUBKEY_HEX);
+      vm.secp256k1_verify(hash_ptr.ptr, sig_ptr.ptr, pubkey_ptr.ptr);
+    } catch (e) {
+      expect(e).toEqual(
+        new Error('Expected signature to be an Uint8Array with length 64')
+      );
+    }
+  });
+  it('fails for wrong pubkey format', () => {
+    try {
+      const hash_ptr = writeData(vm, ECDSA_HASH_HEX);
+      const sig_ptr = writeData(vm, ECDSA_SIG_HEX);
+      const pubkey_ptr = writeData(vm, new Uint8Array(0x20));
+      vm.secp256k1_verify(hash_ptr.ptr, sig_ptr.ptr, pubkey_ptr.ptr);
+    } catch (e) {
+      expect(e).toEqual(
+        new Error('Expected pubkey to be an Uint8Array with length 33')
+      );
+    }
+  });
   it('fails for invalid pubkey', () => {});
   it('fails for large pubkey', () => {});
   it('failes for short pubkey', () => {});
-  it('fails for empty pubkey', () => {});
+  it('fails for empty pubkey', () => {
+    try {
+      const hash_ptr = writeData(vm, ECDSA_HASH_HEX);
+      const sig_ptr = writeData(vm, ECDSA_SIG_HEX);
+      const pubkey_ptr = writeData(vm, toAscii(''));
+      vm.secp256k1_verify(hash_ptr.ptr, sig_ptr.ptr, pubkey_ptr.ptr);
+    } catch (e) {
+      expect(e).toEqual(
+        new Error(
+          'Expected public key to be an Uint8Array with length [33, 65]'
+        )
+      );
+    }
+  });
   it('fails for invalid data', () => {});
 });
 

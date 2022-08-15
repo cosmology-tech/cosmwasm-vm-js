@@ -3,7 +3,6 @@ import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
 import { ecdsaVerify } from 'secp256k1';
 import { eddsa } from 'elliptic';
-
 import { IBackend } from './backend';
 
 export class VMInstance {
@@ -167,7 +166,7 @@ export class VMInstance {
     let hash = this.region(hash_ptr);
     let signature = this.region(signature_ptr);
     let pubkey = this.region(pubkey_ptr);
-    return this.do_secp256k1_verify(hash, signature, pubkey).ptr;
+    return this.do_secp256k1_verify(hash, signature, pubkey);
   }
 
   secp256k1_recover_pubkey(
@@ -243,14 +242,15 @@ export class VMInstance {
 
   do_db_write(key: Region, value: Region) {
     console.log(`db_write ${key.str} => ${value.str}`);
+    if (value.str.length > this.MAX_LENGTH_DB_VALUE) {
+      throw new Error(`db_write: value too large: ${value.str}`);
+    }
+
     // throw error for large keys
     if (key.str.length > this.MAX_LENGTH_DB_KEY) {
       throw new Error(`db_write: key too large: ${key.str}`);
     }
 
-    if (value.str.length > this.MAX_LENGTH_DB_VALUE) {
-      throw new Error(`db_write: value too large: ${value.str}`);
-    }
     this.backend.storage.set(key.data, value.data);
   }
 
@@ -266,22 +266,12 @@ export class VMInstance {
     throw new Error('not implemented');
   }
 
-  protected do_addr_humanize(source: Region, destination: Region): Region {
+  do_addr_humanize(source: Region, destination: Region): Region {
     if (source.str.length === 0) {
       throw new Error('Empty address.');
     }
 
-    const canonical = this.bech32.fromWords(
-      this.bech32.decode(source.str).words
-    );
-
-    if (canonical.length > this.MAX_LENGTH_CANONICAL_ADDRESS) {
-      throw new Error(`Address too large: ${source.str}`);
-    }
-
-    let result = this.backend.backend_api.human_address(
-      Uint8Array.from(canonical)
-    );
+    let result = this.backend.backend_api.human_address(source.data);
 
     destination.write_str(result);
 
@@ -289,11 +279,11 @@ export class VMInstance {
     return new Region(this.exports.memory, 0);
   }
 
-  protected do_addr_canonicalize(source: Region, destination: Region): Region {
+  do_addr_canonicalize(source: Region, destination: Region): Region {
     let source_data = source.str;
 
     if (source_data.length === 0) {
-      throw new Error('Input is empty.');
+      throw new Error('Empty address.');
     }
 
     let result = this.backend.backend_api.canonical_address(source_data);
@@ -335,20 +325,21 @@ export class VMInstance {
     hash: Region,
     signature: Region,
     pubkey: Region
-  ): Region {
-    let result: Region;
+  ): number {
+    console.log(
+      `signature length: ${signature.str.length}, pubkey length: ${pubkey.str.length}, message length: ${hash.str.length}`
+    );
     const isValidSignature = ecdsaVerify(
-      hash.data,
       signature.data,
+      hash.data,
       pubkey.data
     );
 
     if (isValidSignature) {
-      result = this.allocate_bytes(Uint8Array.from([1]));
+      return 0;
     } else {
-      result = this.allocate_bytes(Uint8Array.from([0]));
+      return 1;
     }
-    return result;
   }
 
   protected do_secp256k1_recover_pubkey(
