@@ -254,15 +254,15 @@ export class VMInstance {
     this.backend.storage.set(key.data, value.data);
   }
 
-  protected do_db_remove(key: Region) {
+  do_db_remove(key: Region) {
     this.backend.storage.remove(key.data);
   }
 
-  protected do_db_scan(start: Region, end: Region, order: number): Region {
+  do_db_scan(start: Region, end: Region, order: number): Region {
     throw new Error('not implemented');
   }
 
-  protected do_db_next(iterator_id: number): Region {
+  do_db_next(iterator_id: number): Region {
     throw new Error('not implemented');
   }
 
@@ -293,7 +293,7 @@ export class VMInstance {
     return new Region(this.exports.memory, 0);
   }
 
-  protected do_addr_validate(source: Region): Region {
+  do_addr_validate(source: Region): Region {
     if (source.str.length === 0) {
       throw new Error('Empty address.');
     }
@@ -321,11 +321,7 @@ export class VMInstance {
     return new Region(this.exports.memory, 0);
   }
 
-  protected do_secp256k1_verify(
-    hash: Region,
-    signature: Region,
-    pubkey: Region
-  ): number {
+  do_secp256k1_verify(hash: Region, signature: Region, pubkey: Region): number {
     console.log(
       `signature length: ${signature.str.length}, pubkey length: ${pubkey.str.length}, message length: ${hash.str.length}`
     );
@@ -342,7 +338,7 @@ export class VMInstance {
     }
   }
 
-  protected do_secp256k1_recover_pubkey(
+  do_secp256k1_recover_pubkey(
     hash: Region,
     signature: Region,
     recover_param: number
@@ -350,7 +346,7 @@ export class VMInstance {
     throw new Error('not implemented');
   }
 
-  protected do_ed25519_verify(
+  do_ed25519_verify(
     message: Region,
     signature: Region,
     pubkey: Region
@@ -374,7 +370,7 @@ export class VMInstance {
     return result;
   }
 
-  protected do_ed25519_batch_verify(
+  do_ed25519_batch_verify(
     messages: Region,
     signatures: Region,
     public_keys: Region
@@ -382,20 +378,15 @@ export class VMInstance {
     throw new Error('not implemented');
   }
 
-  protected do_debug(message: Region) {
+  do_debug(message: Region) {
     console.log(message.read_str());
   }
 
-  protected do_query_chain(request: Region): Region {
+  do_query_chain(request: Region): Region {
     throw new Error('not implemented');
   }
 
-  protected do_abort(
-    message: Region,
-    file: Region,
-    line: number,
-    column: number
-  ) {
+  do_abort(message: Region, file: Region, line: number, column: number) {
     throw new Error(
       `abort: ${message.read_str()} at ${file.read_str()}:${line}:${column}`
     );

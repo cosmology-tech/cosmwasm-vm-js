@@ -37,7 +37,7 @@ export interface IBackendApi {
 const SHUFFLES_DECODE: number = 2;
 
 function riffle_shuffle<T>(input: T[]): T[] {
-  if (input.length % 2 == 0) {
+  if (input.length % 2 === 0) {
     throw new Error('Method only defined for even number of elements');
   }
   const mid = input.length / 2;
