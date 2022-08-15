@@ -3,7 +3,9 @@ export interface IEnvironment {
 }
 
 export class Environment {
-  constructor() {}
+  constructor() {
+    this.call_function = this.call_function.bind(this);
+  }
 
   call_function(name: string, args: object[] = []): object {
     if (name.length === 0) {

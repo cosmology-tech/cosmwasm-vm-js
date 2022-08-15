@@ -180,7 +180,7 @@ describe('do_addr_validate', () => {
       toAscii('terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76')
     );
     const result = vm.do_addr_validate(addr_ptr);
-    expect(result).toEqual(0);
+    expect(result.ptr).toEqual(0);
   });
 
   it('fails for invalid address', async () => {
@@ -234,7 +234,7 @@ describe('do_addr_canonicalize', () => {
       human_addr_region,
       vm.allocate(vm.MAX_LENGTH_CANONICAL_ADDRESS)
     );
-    expect(result).toEqual(0);
+    expect(result.ptr).toEqual(0);
   });
 
   it('fails for small inputs', () => {
