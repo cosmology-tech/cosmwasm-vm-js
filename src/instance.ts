@@ -1,8 +1,8 @@
 /*eslint-disable prefer-const */
 import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
-import { ecdsaVerify } from 'secp256k1';
-import { eddsa, ec } from 'elliptic';
+import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
+import { eddsa } from 'elliptic';
 import { IBackend } from './backend';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
@@ -16,13 +16,11 @@ export class VMInstance {
   public backend: IBackend;
   public bech32: BechLib;
   public eddsa: eddsa;
-  public ec: ec;
 
   constructor(backend: IBackend) {
     this.backend = backend;
     this.bech32 = bech32;
     this.eddsa = new eddsa('ed25519');
-    this.ec = new ec('secp256k1');
   }
 
   public async build(wasmByteCode: ArrayBuffer) {
@@ -176,7 +174,7 @@ export class VMInstance {
     hash_ptr: number,
     signature_ptr: number,
     recover_param: number
-  ): number {
+  ): Uint8Array {
     let hash = this.region(hash_ptr);
     let signature = this.region(signature_ptr);
     return this.do_secp256k1_recover_pubkey(hash, signature, recover_param);
@@ -348,11 +346,8 @@ export class VMInstance {
     hash: Region,
     signature: Region,
     recover_param: number
-  ): number {
-    const msg = Buffer.from(hash.data).toString('hex');
-    const sig = Buffer.from(signature.data).toString('hex');
-    const result = this.ec.recoverPubKey(msg, sig, recover_param);
-    return result;
+  ): Uint8Array {
+    return ecdsaRecover(signature.data, recover_param, hash.data, false);
   }
 
   do_ed25519_verify(
