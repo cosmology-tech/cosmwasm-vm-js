@@ -1,0 +1,32 @@
+name: Auto-increment patch version number
+on: 
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    name: Bump version
+    if: "!contains(github.event.head_commit.message, 'ci-skip')"
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PACKAGE_PAT }}
+      - name: Bump
+        id: bump-version
+        run: |
+          YARN_VERSION_GIT_TAG='' yarn version --patch
+          NEW_VERSION=$(grep -Po '(?<="version": ").*(?=",)' package.json)
+          echo "Bumped version to $NEW_VERSION."
+          echo "::set-output name=version::$NEW_VERSION"
+      - name: Pull Remote Changes
+        run: git pull --autostash
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        name: Commit & Push
+        with:
+          commit_message: Bumped version to ${{ steps.bump-version.outputs.version }} [ci-skip]"
