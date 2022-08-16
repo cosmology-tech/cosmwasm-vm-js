@@ -1,6 +1,6 @@
 {
-  "name": "cs.ts",
-  "version": "0.1.0",
+  "name": "@terran-one/cosmwasm-vm-js",
+  "version": "0.1.1",
   "license": "MIT",
   "author": "TerranOne",
   "main": "dist/index.js",
@@ -42,6 +42,9 @@
       "limit": "10 KB"
     }
   ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "devDependencies": {
     "@babel/preset-typescript": "^7.16.7",
     "@cosmjs/crypto": "^0.28.4",
