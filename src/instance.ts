@@ -2,7 +2,7 @@
 import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
 import { ecdsaVerify } from 'secp256k1';
-import { eddsa } from 'elliptic';
+import { eddsa, ec } from 'elliptic';
 import { IBackend } from './backend';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
@@ -16,11 +16,13 @@ export class VMInstance {
   public backend: IBackend;
   public bech32: BechLib;
   public eddsa: eddsa;
+  public ec: ec;
 
   constructor(backend: IBackend) {
     this.backend = backend;
     this.bech32 = bech32;
     this.eddsa = new eddsa('ed25519');
+    this.ec = new ec('secp256k1');
   }
 
   public async build(wasmByteCode: ArrayBuffer) {
@@ -174,7 +176,7 @@ export class VMInstance {
     hash_ptr: number,
     signature_ptr: number,
     recover_param: number
-  ): Region {
+  ): number {
     let hash = this.region(hash_ptr);
     let signature = this.region(signature_ptr);
     return this.do_secp256k1_recover_pubkey(hash, signature, recover_param);
@@ -227,7 +229,9 @@ export class VMInstance {
     let result: Region;
 
     if (key.str.length > MAX_LENGTH_DB_KEY) {
-      throw new Error(`Key too long: ${key.str}`);
+      throw new Error(
+        `Key length ${key.str.length} exceeds maximum length ${MAX_LENGTH_DB_KEY}`
+      );
     }
 
     if (value === null) {
@@ -344,8 +348,11 @@ export class VMInstance {
     hash: Region,
     signature: Region,
     recover_param: number
-  ): Region {
-    throw new Error('not implemented');
+  ): number {
+    const msg = Buffer.from(hash.data).toString('hex');
+    const sig = Buffer.from(signature.data).toString('hex');
+    const result = this.ec.recoverPubKey(msg, sig, recover_param);
+    return result;
   }
 
   do_ed25519_verify(
@@ -353,9 +360,9 @@ export class VMInstance {
     signature: Region,
     pubkey: Region
   ): number {
-    const sig = Buffer.from(signature.data);
-    const pub = Buffer.from(pubkey.data);
-    const msg = Buffer.from(message.data);
+    const sig = Buffer.from(signature.data).toString('hex');
+    const pub = Buffer.from(pubkey.data).toString('hex');
+    const msg = Buffer.from(message.data).toString('hex');
     const _signature = this.eddsa.makeSignature(sig);
     const _pubkey = this.eddsa.keyFromPublic(pub);
 

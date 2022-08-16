@@ -37,6 +37,17 @@ const EDDSA_PUBKEY_HEX = fromHex(
   'd75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a'
 );
 
+const SECP256K1_MSG_HEX = fromHex(
+  '5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0'
+);
+const SECP256K1_SIG_HEX = fromHex(
+  '45c0b7f8c09a9e1f1cea0c25785594427b6bf8f9f878a8af0b1abbb48e16d0920d8becd0c220f67c51217eecfd7184ef0732481c843857e6bc7fc095c4f6b788'
+);
+const RECOVER_PARAM = 1;
+const SECP256K1_PUBKEY_HEX = fromHex(
+  '044a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5f8c8fbd10b71ab14cd561f7df8eb6da50f8a8d81ba564342244d26d1d4211595'
+);
+
 const createVM = async (): Promise<VMInstance> => {
   const wasm_byte_code = readFileSync('testdata/hackatom.wasm');
   const backend: IBackend = {
@@ -87,9 +98,7 @@ describe('do_db_read', () => {
       vm.do_db_read(key_ptr);
     } catch (e) {
       expect(e).toEqual(
-        new Error(
-          `Key too long: ${'I do not exist in storage'.repeat(65 * 1024)}`
-        )
+        new Error('Key length 1664000 exceeds maximum length 65536')
       );
     }
   });
@@ -199,9 +208,7 @@ describe('do_db_remove', () => {
       vm.do_db_remove(key_ptr);
     } catch (e) {
       expect(e).toEqual(
-        new Error(
-          `Key ${'I do not exist in storage'.repeat(65 * 1024)} too long`
-        )
+        new Error(`Key length 1664000 exceeds maximum length 65536.`)
       );
     }
   });
@@ -592,71 +599,59 @@ describe('do_ed25519_verify', () => {
     const sig_ptr = writeData(vm, EDDSA_SIG_HEX);
     const pubkey_ptr = writeData(vm, EDDSA_PUBKEY_HEX);
     const result = vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
-    expect(result).toEqual(1);
+    expect(result).toEqual(0);
   });
 
   it('fails for invalid msg', () => {
-    try {
-      const hash = new Uint8Array([...EDDSA_MSG_HEX, 0x01]);
-      const hash_ptr = writeData(vm, hash);
-      const sig_ptr = writeData(vm, EDDSA_SIG_HEX);
-      const pubkey_ptr = writeData(vm, EDDSA_PUBKEY_HEX);
-      vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
-    } catch (e) {
-      expect(e).toEqual(new Error('Assertion failed'));
-    }
+    const hash = new Uint8Array([...EDDSA_MSG_HEX, 0x01]);
+    const hash_ptr = writeData(vm, hash);
+    const sig_ptr = writeData(vm, EDDSA_SIG_HEX);
+    const pubkey_ptr = writeData(vm, EDDSA_PUBKEY_HEX);
+    const result = vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
+    expect(result).toEqual(1);
   });
+
   it('fails for large msg', () => {
-    try {
-      const hash_ptr = writeData(vm, new Uint8Array(33 * 1024).fill(0x22));
-      const sig_ptr = writeData(vm, EDDSA_SIG_HEX);
-      const pubkey_ptr = writeData(vm, EDDSA_PUBKEY_HEX);
-      vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
-    } catch (e) {
-      expect(e).toEqual(new Error('Assertion failed'));
-    }
+    const hash_ptr = writeData(vm, new Uint8Array(33 * 1024).fill(0x22));
+    const sig_ptr = writeData(vm, EDDSA_SIG_HEX);
+    const pubkey_ptr = writeData(vm, EDDSA_PUBKEY_HEX);
+    const result = vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
+    expect(result).toEqual(1);
   });
-  it('fails for short msg', () => {
-    try {
-      const hash_ptr = writeData(vm, new Uint8Array(32));
-      const sig_ptr = writeData(vm, ECDSA_SIG_HEX);
-      const pubkey_ptr = writeData(vm, ECDSA_PUBKEY_HEX);
-      vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
-    } catch (e) {
-      expect(e).toEqual(new Error('Assertion failed'));
-    }
+
+  it('fails for wrong msg', () => {
+    const msg = new Uint8Array([...EDDSA_MSG_HEX, 0x01]);
+    const hash_ptr = writeData(vm, msg);
+    const sig_ptr = writeData(vm, EDDSA_SIG_HEX);
+    const pubkey_ptr = writeData(vm, EDDSA_PUBKEY_HEX);
+    const result = vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
+    expect(result).toEqual(1);
   });
 
   it('fails for invalid sig', () => {
-    try {
-      const sig = EDDSA_SIG_HEX;
-      sig[1] ^= 0x01;
-      const hash_ptr = writeData(vm, ECDSA_HASH_HEX);
-      const sig_ptr = writeData(vm, sig);
-      const pubkey_ptr = writeData(vm, ECDSA_PUBKEY_HEX);
-      vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
-    } catch (e) {
-      expect(e).toEqual(new Error('Assertion failed'));
-    }
+    const sig = EDDSA_SIG_HEX;
+    sig[0] ^= 0x01;
+    const hash_ptr = writeData(vm, EDDSA_MSG_HEX);
+    const sig_ptr = writeData(vm, sig);
+    const pubkey_ptr = writeData(vm, EDDSA_PUBKEY_HEX);
+    const result = vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
+    expect(result).toEqual(1);
   });
 
   it('fails for large sig', () => {
-    try {
-      const sig = new Uint8Array([...EDDSA_SIG_HEX, 0x00]);
-      const hash_ptr = writeData(vm, ECDSA_HASH_HEX);
-      const sig_ptr = writeData(vm, sig);
-      const pubkey_ptr = writeData(vm, ECDSA_PUBKEY_HEX);
-      vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
-    } catch (e) {
-      expect(e).toEqual(new Error('Assertion failed'));
-    }
+    const sig = new Uint8Array([...EDDSA_SIG_HEX, 0x00]);
+    const hash_ptr = writeData(vm, EDDSA_MSG_HEX);
+    const sig_ptr = writeData(vm, sig);
+    const pubkey_ptr = writeData(vm, EDDSA_PUBKEY_HEX);
+    const result = vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
+    expect(result).toEqual(1);
   });
 
   it('fails for short sig', () => {
     try {
-      const hash_ptr = writeData(vm, ECDSA_HASH_HEX);
+      const hash_ptr = writeData(vm, EDDSA_MSG_HEX);
       const sig_ptr = writeData(vm, new Uint8Array(32));
-      const pubkey_ptr = writeData(vm, ECDSA_PUBKEY_HEX);
+      const pubkey_ptr = writeData(vm, EDDSA_PUBKEY_HEX);
       vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
     } catch (e) {
       expect(e).toEqual(new Error('Assertion failed'));
@@ -664,34 +659,28 @@ describe('do_ed25519_verify', () => {
   });
 
   it('fails for invalid pubkey', () => {
-    try {
-      const pub = EDDSA_PUBKEY_HEX;
-      pub[1] ^= 0x01;
-      const hash_ptr = writeData(vm, ECDSA_HASH_HEX);
-      const sig_ptr = writeData(vm, ECDSA_SIG_HEX);
-      const pubkey_ptr = writeData(vm, pub);
-      vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
-    } catch (e) {
-      expect(e).toEqual(new Error('Assertion failed'));
-    }
+    const pub = EDDSA_PUBKEY_HEX;
+    pub[1] ^= 0x01;
+    const hash_ptr = writeData(vm, EDDSA_MSG_HEX);
+    const sig_ptr = writeData(vm, EDDSA_SIG_HEX);
+    const pubkey_ptr = writeData(vm, pub);
+    const result = vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
+    expect(result).toEqual(1);
   });
 
-  it.skip('fails for large pubkey', () => {
-    try {
-      const pub = new Uint8Array([...EDDSA_PUBKEY_HEX, 0x00]);
-      const hash_ptr = writeData(vm, ECDSA_HASH_HEX);
-      const sig_ptr = writeData(vm, ECDSA_SIG_HEX);
-      const pubkey_ptr = writeData(vm, pub);
-      vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
-    } catch (e) {
-      expect(e).toEqual(new Error('Assertion failed'));
-    }
+  it('fails for large pubkey', () => {
+    const pub = new Uint8Array([...EDDSA_PUBKEY_HEX, 0x00]);
+    const hash_ptr = writeData(vm, EDDSA_MSG_HEX);
+    const sig_ptr = writeData(vm, EDDSA_SIG_HEX);
+    const pubkey_ptr = writeData(vm, pub);
+    const result = vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
+    expect(result).toEqual(1);
   });
 
   it('fails for short pubkey', () => {
     try {
-      const hash_ptr = writeData(vm, ECDSA_HASH_HEX);
-      const sig_ptr = writeData(vm, ECDSA_SIG_HEX);
+      const hash_ptr = writeData(vm, EDDSA_MSG_HEX);
+      const sig_ptr = writeData(vm, EDDSA_SIG_HEX);
       const pubkey_ptr = writeData(vm, new Uint8Array(33));
       vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
     } catch (e) {
@@ -701,8 +690,8 @@ describe('do_ed25519_verify', () => {
 
   it('fails for empty pubkey', () => {
     try {
-      const hash_ptr = writeData(vm, ECDSA_HASH_HEX);
-      const sig_ptr = writeData(vm, ECDSA_SIG_HEX);
+      const hash_ptr = writeData(vm, EDDSA_MSG_HEX);
+      const sig_ptr = writeData(vm, EDDSA_SIG_HEX);
       const pubkey_ptr = writeData(vm, new Uint8Array());
       vm.do_ed25519_verify(hash_ptr, sig_ptr, pubkey_ptr);
     } catch (e) {
@@ -723,7 +712,21 @@ describe('do_ed25519_verify', () => {
 });
 
 describe('do_secp256k1_recover_pubkey', () => {
-  it('works', () => {});
+  let vm: VMInstance;
+  beforeEach(async () => {
+    vm = await createVM();
+  });
+
+  it('works', () => {
+    const msg_ptr = writeData(vm, SECP256K1_MSG_HEX);
+    const sig_ptr = writeData(vm, SECP256K1_SIG_HEX);
+    const result = vm.do_secp256k1_recover_pubkey(
+      msg_ptr,
+      sig_ptr,
+      RECOVER_PARAM
+    );
+    expect(result).toEqual(SECP256K1_PUBKEY_HEX);
+  });
 });
 
 describe('do_query_chain', () => {

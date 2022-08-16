@@ -34,7 +34,8 @@ export class BasicKVStorage implements IStorage {
     const keyStr = toBase64(key);
     const value = this.dict[keyStr];
     if (value === undefined) {
-      throw new Error(`Key ${key} not found`);
+      console.log(`Key ${keyStr} not found.`);
+      return null;
     }
 
     return fromBase64(value);
@@ -47,7 +48,9 @@ export class BasicKVStorage implements IStorage {
 
   remove(key: Uint8Array): void {
     if (key.length > MAX_LENGTH_DB_KEY) {
-      throw new Error(`Key ${key} too long`);
+      throw new Error(
+        `Key length ${key.length} exceeds maximum length ${MAX_LENGTH_DB_KEY}.`
+      );
     }
     this.dict[toBase64(key)] = undefined;
   }
