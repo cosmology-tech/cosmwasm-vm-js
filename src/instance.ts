@@ -5,12 +5,13 @@ import { ecdsaVerify } from 'secp256k1';
 import { eddsa } from 'elliptic';
 import { IBackend } from './backend';
 
+export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
+export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
+export const MAX_LENGTH_CANONICAL_ADDRESS: number = 64;
+export const MAX_LENGTH_HUMAN_ADDRESS: number = 256;
+
 export class VMInstance {
   public PREFIX: string = 'terra';
-  public MAX_LENGTH_DB_KEY: number = 64 * 1024;
-  public MAX_LENGTH_DB_VALUE: number = 128 * 1024;
-  public MAX_LENGTH_CANONICAL_ADDRESS = 64;
-  public MAX_LENGTH_HUMAN_ADDRESS = 256;
   public instance?: WebAssembly.Instance;
   public backend: IBackend;
   public bech32: BechLib;
@@ -225,7 +226,7 @@ export class VMInstance {
     let value = this.backend.storage.get(key.data);
     let result: Region;
 
-    if (key.str.length > this.MAX_LENGTH_DB_KEY) {
+    if (key.str.length > MAX_LENGTH_DB_KEY) {
       throw new Error(`Key too long: ${key.str}`);
     }
 
@@ -242,12 +243,13 @@ export class VMInstance {
 
   do_db_write(key: Region, value: Region) {
     console.log(`db_write ${key.str} => ${value.str}`);
-    if (value.str.length > this.MAX_LENGTH_DB_VALUE) {
+
+    if (value.str.length > MAX_LENGTH_DB_VALUE) {
       throw new Error(`db_write: value too large: ${value.str}`);
     }
 
     // throw error for large keys
-    if (key.str.length > this.MAX_LENGTH_DB_KEY) {
+    if (key.str.length > MAX_LENGTH_DB_KEY) {
       throw new Error(`db_write: key too large: ${key.str}`);
     }
 
@@ -298,7 +300,7 @@ export class VMInstance {
       throw new Error('Empty address.');
     }
 
-    if (source.str.length > this.MAX_LENGTH_HUMAN_ADDRESS) {
+    if (source.str.length > MAX_LENGTH_HUMAN_ADDRESS) {
       throw new Error(`Address too large: ${source.str}`);
     }
 
@@ -351,14 +353,13 @@ export class VMInstance {
     signature: Region,
     pubkey: Region
   ): number {
-    const signature_str = this.eddsa.makeSignature(signature.str);
-    const pubkey_str = this.eddsa.keyFromPublic(pubkey.str);
+    const sig = Buffer.from(signature.data);
+    const pub = Buffer.from(pubkey.data);
+    const msg = Buffer.from(message.data);
+    const _signature = this.eddsa.makeSignature(sig);
+    const _pubkey = this.eddsa.keyFromPublic(pub);
 
-    const isValidSignature = this.eddsa.verify(
-      message.str,
-      signature_str,
-      pubkey_str
-    );
+    const isValidSignature = this.eddsa.verify(msg, _signature, _pubkey);
 
     if (isValidSignature) {
       return 0;

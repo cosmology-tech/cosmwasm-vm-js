@@ -1,9 +1,37 @@
+import { IBackendApi, IQuerier, IStorage } from 'backend';
+
 export interface IEnvironment {
   call_function(name: string, args: object[]): object;
 }
 
+export interface GasState {
+  gas_limit: number;
+  externally_used_gas: number;
+}
+
+export interface ContextData {
+  gas_state: GasState;
+  storage: IStorage;
+  storage_readonly: boolean;
+  wasmer_instance: any;
+}
+
 export class Environment {
-  constructor() {
+  public storage: IStorage;
+  public querier: IQuerier;
+  public backendApi: IBackendApi;
+  public data: ContextData;
+
+  constructor(
+    storage: IStorage,
+    querier: IQuerier,
+    backendApi: IBackendApi,
+    data: ContextData
+  ) {
+    this.storage = storage;
+    this.querier = querier;
+    this.backendApi = backendApi;
+    this.data = data;
     this.call_function = this.call_function.bind(this);
   }
 
@@ -17,5 +45,9 @@ export class Environment {
     }
 
     return {};
+  }
+
+  public is_storage_readonly(): boolean {
+    return this.data.storage_readonly;
   }
 }
