@@ -236,16 +236,12 @@ export class VMInstance {
       console.log(`db_read: key not found: ${key.str}`);
       result = this.region(0);
     } else {
-      console.log(`db_read: key found: ${key.str}`);
       result = this.allocate_bytes(value);
     }
-    console.log(`db_read: ${key.str} => ${result.str}`);
     return result;
   }
 
   do_db_write(key: Region, value: Region) {
-    console.log(`db_write ${key.str} => ${value.str}`);
-
     if (value.str.length > MAX_LENGTH_DB_VALUE) {
       throw new Error(`db_write: value too large: ${value.str}`);
     }

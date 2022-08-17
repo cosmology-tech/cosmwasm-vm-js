@@ -31,8 +31,6 @@ describe('CosmWasmVM', () => {
     await vm.build(wasm_byte_code);
 
     const region = vm.instantiate(mock_env, mock_info, { count: 20 });
-    console.log(region.json);
-    console.log(vm.backend);
     const actual = {
       ok: {
         attributes: [
@@ -56,8 +54,6 @@ describe('CosmWasmVM', () => {
 
     let region = vm.instantiate(mock_env, mock_info, { count: 20 });
     region = vm.execute(mock_env, mock_info, { increment: {} });
-    console.log(region.json);
-    console.log(vm.backend);
     const actual = {
       ok: {
         attributes: [{ key: 'method', value: 'try_increment' }],
