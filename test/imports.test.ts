@@ -48,7 +48,7 @@ const SECP256K1_PUBKEY_HEX = fromHex(
   '044a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5f8c8fbd10b71ab14cd561f7df8eb6da50f8a8d81ba564342244d26d1d4211595'
 );
 
-const createVM = async (): Promise<VMInstance> => {
+export const createVM = async (): Promise<VMInstance> => {
   const wasm_byte_code = readFileSync('testdata/hackatom.wasm');
   const backend: IBackend = {
     backend_api: new BasicBackendApi('terra'),
@@ -64,7 +64,7 @@ const createVM = async (): Promise<VMInstance> => {
   return vm;
 };
 
-const writeData = (vm: VMInstance, data: Uint8Array): Region => {
+export const writeData = (vm: VMInstance, data: Uint8Array): Region => {
   return vm.allocate_bytes(data);
 };
 

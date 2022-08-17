@@ -34,7 +34,6 @@ export class BasicKVStorage implements IStorage {
     const keyStr = toBase64(key);
     const value = this.dict[keyStr];
     if (value === undefined) {
-      console.log(`Key ${keyStr} not found.`);
       return null;
     }
 

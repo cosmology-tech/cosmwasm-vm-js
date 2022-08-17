@@ -69,7 +69,8 @@ export class BasicBackendApi implements BasicBackendApi {
       );
     }
 
-    // Remove excess padding, otherwise bech32.encode will throw "Exceeds length limit" error.
+    // Remove excess padding, otherwise bech32.encode will throw "Exceeds length limit"
+    // error when normalized is greater than 48 in length.
     const normalized =
       canonical.length - this.EXCESS_PADDING >= 48
         ? canonical.slice(0, this.CANONICAL_LENGTH - this.EXCESS_PADDING)
