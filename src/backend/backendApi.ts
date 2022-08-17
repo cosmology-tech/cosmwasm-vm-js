@@ -1,4 +1,5 @@
-import { fromBech32, normalizeBech32, toBech32 } from '@cosmjs/encoding';
+import { fromBech32, normalizeBech32 } from '@cosmjs/encoding';
+import { bech32 } from 'bech32';
 
 export interface IGasInfo {
   cost: number;
@@ -36,7 +37,7 @@ export interface IBackendApi {
 export class BasicBackendApi implements BasicBackendApi {
   // public GAS_COST_CANONICALIZE = 55;
   public CANONICAL_LENGTH = 54;
-
+  public EXCESS_PADDING = 6;
   constructor(public bech32_prefix: string = 'terra') {}
 
   public canonical_address(human: string): Uint8Array {
@@ -47,11 +48,11 @@ export class BasicBackendApi implements BasicBackendApi {
     const normalized = normalizeBech32(human);
 
     if (normalized.length < 3) {
-      throw new Error(`Address too short: ${normalized}`);
+      throw new Error(`canonical_address: Address too short: ${normalized}`);
     }
 
     if (normalized.length > this.CANONICAL_LENGTH) {
-      throw new Error(`Address too long: ${normalized}`);
+      throw new Error(`canonical_address: Address too long: ${normalized}`);
     }
 
     return fromBech32(normalized).data;
@@ -59,15 +60,20 @@ export class BasicBackendApi implements BasicBackendApi {
 
   public human_address(canonical: Uint8Array): string {
     if (canonical.length === 0) {
-      throw new Error('Empty canonical address');
+      throw new Error('human_address: Empty canonical address');
     }
 
-    if (canonical.length != this.CANONICAL_LENGTH) {
+    if (canonical.length !== this.CANONICAL_LENGTH) {
       throw new Error(
-        `Invalid input: canonical address length not correct: ${canonical.length}`
+        `human_address: canonical address length not correct: ${canonical.length}`
       );
     }
 
-    return toBech32(this.bech32_prefix, canonical);
+    // Remove excess padding, otherwise bech32.encode will throw "Exceeds length limit" error.
+    const normalized =
+      canonical.length - this.EXCESS_PADDING >= 48
+        ? canonical.slice(0, this.CANONICAL_LENGTH - this.EXCESS_PADDING)
+        : canonical;
+    return bech32.encode(this.bech32_prefix, bech32.toWords(normalized));
   }
 }

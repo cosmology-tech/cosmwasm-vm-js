@@ -1,17 +1,17 @@
 /*eslint-disable prefer-const */
 import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
-import { ecdsaVerify } from 'secp256k1';
+import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { eddsa } from 'elliptic';
-
 import { IBackend } from './backend';
+
+export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
+export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
+export const MAX_LENGTH_CANONICAL_ADDRESS: number = 64;
+export const MAX_LENGTH_HUMAN_ADDRESS: number = 256;
 
 export class VMInstance {
   public PREFIX: string = 'terra';
-  public MAX_LENGTH_DB_KEY: number = 64 * 1024;
-  public MAX_LENGTH_DB_VALUE: number = 128 * 1024;
-  public MAX_LENGTH_CANONICAL_ADDRESS = 64;
-  public MAX_LENGTH_HUMAN_ADDRESS = 256;
   public instance?: WebAssembly.Instance;
   public backend: IBackend;
   public bech32: BechLib;
@@ -167,14 +167,14 @@ export class VMInstance {
     let hash = this.region(hash_ptr);
     let signature = this.region(signature_ptr);
     let pubkey = this.region(pubkey_ptr);
-    return this.do_secp256k1_verify(hash, signature, pubkey).ptr;
+    return this.do_secp256k1_verify(hash, signature, pubkey);
   }
 
   secp256k1_recover_pubkey(
     hash_ptr: number,
     signature_ptr: number,
     recover_param: number
-  ): Region {
+  ): Uint8Array {
     let hash = this.region(hash_ptr);
     let signature = this.region(signature_ptr);
     return this.do_secp256k1_recover_pubkey(hash, signature, recover_param);
@@ -188,7 +188,7 @@ export class VMInstance {
     let message = this.region(message_ptr);
     let signature = this.region(signature_ptr);
     let pubkey = this.region(pubkey_ptr);
-    return this.do_ed25519_verify(message, signature, pubkey).ptr;
+    return this.do_ed25519_verify(message, signature, pubkey);
   }
 
   ed25519_batch_verify(
@@ -225,6 +225,13 @@ export class VMInstance {
   do_db_read(key: Region): Region {
     let value = this.backend.storage.get(key.data);
     let result: Region;
+
+    if (key.str.length > MAX_LENGTH_DB_KEY) {
+      throw new Error(
+        `Key length ${key.str.length} exceeds maximum length ${MAX_LENGTH_DB_KEY}`
+      );
+    }
+
     if (value === null) {
       console.log(`db_read: key not found: ${key.str}`);
       result = this.region(0);
@@ -238,45 +245,37 @@ export class VMInstance {
 
   do_db_write(key: Region, value: Region) {
     console.log(`db_write ${key.str} => ${value.str}`);
+
+    if (value.str.length > MAX_LENGTH_DB_VALUE) {
+      throw new Error(`db_write: value too large: ${value.str}`);
+    }
+
     // throw error for large keys
-    if (key.str.length > this.MAX_LENGTH_DB_KEY) {
+    if (key.str.length > MAX_LENGTH_DB_KEY) {
       throw new Error(`db_write: key too large: ${key.str}`);
     }
 
-    if (value.data.length > this.MAX_LENGTH_DB_VALUE) {
-      throw new Error(`db_write: value too large: ${value.str}`);
-    }
     this.backend.storage.set(key.data, value.data);
   }
 
-  protected do_db_remove(key: Region) {
+  do_db_remove(key: Region) {
     this.backend.storage.remove(key.data);
   }
 
-  protected do_db_scan(start: Region, end: Region, order: number): Region {
+  do_db_scan(start: Region, end: Region, order: number): Region {
     throw new Error('not implemented');
   }
 
-  protected do_db_next(iterator_id: number): Region {
+  do_db_next(iterator_id: number): Region {
     throw new Error('not implemented');
   }
 
-  protected do_addr_humanize(source: Region, destination: Region): Region {
+  do_addr_humanize(source: Region, destination: Region): Region {
     if (source.str.length === 0) {
       throw new Error('Empty address.');
     }
 
-    const canonical = this.bech32.fromWords(
-      this.bech32.decode(source.str).words
-    );
-
-    if (canonical.length > this.MAX_LENGTH_CANONICAL_ADDRESS) {
-      throw new Error(`Address too large: ${source.str}`);
-    }
-
-    let result = this.backend.backend_api.human_address(
-      Uint8Array.from(canonical)
-    );
+    let result = this.backend.backend_api.human_address(source.data);
 
     destination.write_str(result);
 
@@ -284,11 +283,11 @@ export class VMInstance {
     return new Region(this.exports.memory, 0);
   }
 
-  protected do_addr_canonicalize(source: Region, destination: Region): Region {
+  do_addr_canonicalize(source: Region, destination: Region): Region {
     let source_data = source.str;
 
     if (source_data.length === 0) {
-      throw new Error('Input is empty.');
+      throw new Error('Empty address.');
     }
 
     let result = this.backend.backend_api.canonical_address(source_data);
@@ -298,12 +297,12 @@ export class VMInstance {
     return new Region(this.exports.memory, 0);
   }
 
-  protected do_addr_validate(source: Region): Region {
+  do_addr_validate(source: Region): Region {
     if (source.str.length === 0) {
       throw new Error('Empty address.');
     }
 
-    if (source.str.length > this.MAX_LENGTH_HUMAN_ADDRESS) {
+    if (source.str.length > MAX_LENGTH_HUMAN_ADDRESS) {
       throw new Error(`Address too large: ${source.str}`);
     }
 
@@ -326,62 +325,52 @@ export class VMInstance {
     return new Region(this.exports.memory, 0);
   }
 
-  protected do_secp256k1_verify(
-    hash: Region,
-    signature: Region,
-    pubkey: Region
-  ): Region {
-    let result: Region;
-    const hash_bytes = Buffer.from(hash.b64, 'base64');
-    const signature_bytes = Buffer.from(signature.b64, 'base64');
-    const pubkey_bytes = Buffer.from(pubkey.b64, 'base64');
+  do_secp256k1_verify(hash: Region, signature: Region, pubkey: Region): number {
+    console.log(
+      `signature length: ${signature.str.length}, pubkey length: ${pubkey.str.length}, message length: ${hash.str.length}`
+    );
     const isValidSignature = ecdsaVerify(
-      hash_bytes,
-      signature_bytes,
-      pubkey_bytes
+      signature.data,
+      hash.data,
+      pubkey.data
     );
 
     if (isValidSignature) {
-      result = this.allocate_bytes(Uint8Array.from([1]));
+      return 0;
     } else {
-      result = this.allocate_bytes(Uint8Array.from([0]));
+      return 1;
     }
-    return result;
   }
 
-  protected do_secp256k1_recover_pubkey(
+  do_secp256k1_recover_pubkey(
     hash: Region,
     signature: Region,
     recover_param: number
-  ): Region {
-    throw new Error('not implemented');
+  ): Uint8Array {
+    return ecdsaRecover(signature.data, recover_param, hash.data, false);
   }
 
-  protected do_ed25519_verify(
+  do_ed25519_verify(
     message: Region,
     signature: Region,
     pubkey: Region
-  ): Region {
-    let result: Region;
-    const message_str = Buffer.from(message.b64, 'base64').toString('binary');
-    const signature_str = this.eddsa.makeSignature(signature.b64);
-    const pubkey_str = this.eddsa.keyFromPublic(pubkey.b64);
+  ): number {
+    const sig = Buffer.from(signature.data).toString('hex');
+    const pub = Buffer.from(pubkey.data).toString('hex');
+    const msg = Buffer.from(message.data).toString('hex');
+    const _signature = this.eddsa.makeSignature(sig);
+    const _pubkey = this.eddsa.keyFromPublic(pub);
 
-    const isValidSignature = this.eddsa.verify(
-      message_str,
-      signature_str,
-      pubkey_str
-    );
+    const isValidSignature = this.eddsa.verify(msg, _signature, _pubkey);
 
     if (isValidSignature) {
-      result = this.allocate_bytes(Uint8Array.from([1]));
+      return 0;
     } else {
-      result = this.allocate_bytes(Uint8Array.from([0]));
+      return 1;
     }
-    return result;
   }
 
-  protected do_ed25519_batch_verify(
+  do_ed25519_batch_verify(
     messages: Region,
     signatures: Region,
     public_keys: Region
@@ -389,20 +378,15 @@ export class VMInstance {
     throw new Error('not implemented');
   }
 
-  protected do_debug(message: Region) {
+  do_debug(message: Region) {
     console.log(message.read_str());
   }
 
-  protected do_query_chain(request: Region): Region {
+  do_query_chain(request: Region): Region {
     throw new Error('not implemented');
   }
 
-  protected do_abort(
-    message: Region,
-    file: Region,
-    line: number,
-    column: number
-  ) {
+  do_abort(message: Region, file: Region, line: number, column: number) {
     throw new Error(
       `abort: ${message.read_str()} at ${file.read_str()}:${line}:${column}`
     );

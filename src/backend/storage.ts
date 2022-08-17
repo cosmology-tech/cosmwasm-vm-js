@@ -1,4 +1,5 @@
 import { fromBase64, toBase64 } from '@cosmjs/encoding';
+import { MAX_LENGTH_DB_KEY } from '../instance';
 
 export interface IStorage {
   get(key: Uint8Array): Uint8Array | null;
@@ -6,6 +7,8 @@ export interface IStorage {
   set(key: Uint8Array, value: Uint8Array): void;
 
   remove(key: Uint8Array): void;
+
+  clear(): void;
 }
 
 export enum Order {
@@ -31,6 +34,7 @@ export class BasicKVStorage implements IStorage {
     const keyStr = toBase64(key);
     const value = this.dict[keyStr];
     if (value === undefined) {
+      console.log(`Key ${keyStr} not found.`);
       return null;
     }
 
@@ -43,6 +47,17 @@ export class BasicKVStorage implements IStorage {
   }
 
   remove(key: Uint8Array): void {
+    if (key.length > MAX_LENGTH_DB_KEY) {
+      throw new Error(
+        `Key length ${key.length} exceeds maximum length ${MAX_LENGTH_DB_KEY}.`
+      );
+    }
     this.dict[toBase64(key)] = undefined;
+  }
+
+  clear() {
+    Object.keys(this.dict).forEach((key) => {
+      delete this.dict[key];
+    });
   }
 }
