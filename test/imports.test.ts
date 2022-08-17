@@ -154,7 +154,6 @@ describe('do_db_write', () => {
     }
   });
 
-  // The key is overridden by the value, so the value exception is never reached.
   it('fails for large value', async () => {
     try {
       const key_ptr = writeData(vm, toAscii('new storage key'));
@@ -356,7 +355,7 @@ describe('do_addr_humanize', () => {
     const canonical_addr_region = writeData(vm, new Uint8Array(54).fill(0x22));
     const destination = vm.allocate(MAX_LENGTH_HUMAN_ADDRESS);
     const result = vm.do_addr_humanize(canonical_addr_region, destination);
-    expect(result).toEqual(0);
+    expect(result.ptr).toEqual(0);
   });
 
   it('fails for invalid address', () => {
@@ -371,9 +370,7 @@ describe('do_addr_humanize', () => {
       );
     } catch (e) {
       expect(e).toEqual(
-        new Error(
-          'Invalid checksum for terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq77'
-        )
+        new Error('human_address: canonical address length not correct: 44')
       );
     }
   });
@@ -418,6 +415,18 @@ describe('do_addr_humanize', () => {
       );
     } catch (e) {
       expect(e).toEqual(new Error('Empty address.'));
+    }
+  });
+
+  it('fails for small destination region', () => {
+    try {
+      const canonical_addr_region = writeData(
+        vm,
+        new Uint8Array(54).fill(0x22)
+      );
+      vm.do_addr_humanize(canonical_addr_region, vm.allocate(0));
+    } catch (e) {
+      expect(e).toEqual(new RangeError('offset is out of bounds'));
     }
   });
 });
