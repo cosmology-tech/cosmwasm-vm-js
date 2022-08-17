@@ -1,6 +1,6 @@
 {
   "name": "@terran-one/cosmwasm-vm-js",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "license": "MIT",
   "author": "TerranOne",
   "main": "dist/index.js",
