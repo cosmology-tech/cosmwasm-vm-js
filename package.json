@@ -4,11 +4,10 @@
   "license": "MIT",
   "author": "TerranOne",
   "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "types": "dist/index.d.ts",
   "type": "commonjs",
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "scripts": {
     "build": "tsc --module commonjs && webpack --mode production",
