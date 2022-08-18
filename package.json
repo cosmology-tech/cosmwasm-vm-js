@@ -1,6 +1,6 @@
 {
   "name": "@terran-one/cosmwasm-vm-js",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "license": "MIT",
   "author": "TerranOne",
   "main": "dist/index.js",
@@ -68,11 +68,11 @@
     "@cosmjs/encoding": "^0.28.4",
     "@types/elliptic": "^6.4.14",
     "@types/secp256k1": "^4.0.3",
-    "synchronized-promise": "^0.3.1",
     "bech32": "^2.0.0",
     "elliptic": "^6.5.4",
     "process": "^0.11.10",
     "secp256k1": "^4.0.3",
+    "synchronized-promise": "^0.3.1",
     "util": "^0.12.4"
   }
 }
