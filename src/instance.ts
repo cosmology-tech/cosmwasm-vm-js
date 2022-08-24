@@ -199,7 +199,7 @@ export class VMInstance {
     let messages = this.region(messages_ptr);
     let signatures = this.region(signatures_ptr);
     let public_keys = this.region(public_keys_ptr);
-    return this.do_ed25519_batch_verify(messages, signatures, public_keys).ptr;
+    return this.do_ed25519_batch_verify(messages, signatures, public_keys);
   }
 
   debug(message_ptr: number) {
@@ -370,8 +370,36 @@ export class VMInstance {
     messages: Region,
     signatures: Region,
     public_keys: Region
-  ): Region {
-    throw new Error('not implemented');
+  ): number {
+    const messages_data = JSON.parse(messages.str);
+    const signature_data = JSON.parse(signatures.str);
+    const pubKey_data = JSON.parse(public_keys.str);
+    if (
+      messages_data.length !== signature_data.length ||
+      messages_data.length !== pubKey_data.length
+    ) {
+      throw new Error(
+        'Lengths of messages, signatures and public keys do not match.'
+      );
+    }
+
+    for (let i = 0; i < messages_data.length; i++) {
+      const msg = Uint8Array.from(Object.values(messages_data[i]));
+      const sig = Uint8Array.from(Object.values(signature_data[i]));
+      const pub = Uint8Array.from(Object.values(pubKey_data[i]));
+      const _sig = Buffer.from(sig).toString('hex');
+      const _pub = Buffer.from(pub).toString('hex');
+      const _msg = Buffer.from(msg).toString('hex');
+      const _signature = this.eddsa.makeSignature(_sig);
+      const _pubkey = this.eddsa.keyFromPublic(_pub);
+
+      const isValidSignature = this.eddsa.verify(_msg, _signature, _pubkey);
+
+      if (!isValidSignature) {
+        return 0;
+      }
+    }
+    return 1;
   }
 
   do_debug(message: Region) {
