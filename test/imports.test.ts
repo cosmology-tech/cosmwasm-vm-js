@@ -48,6 +48,14 @@ const SECP256K1_PUBKEY_HEX = fromHex(
   '044a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5f8c8fbd10b71ab14cd561f7df8eb6da50f8a8d81ba564342244d26d1d4211595'
 );
 
+const ED25519_MSG_HEX = fromHex('72');
+const ED25519_SIG_HEX = fromHex(
+  '92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00'
+);
+const ED25519_PUBKEY_HEX = fromHex(
+  '3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c'
+);
+
 export const createVM = async (): Promise<VMInstance> => {
   const wasm_byte_code = readFileSync('testdata/hackatom.wasm');
   const backend: IBackend = {
@@ -66,6 +74,10 @@ export const createVM = async (): Promise<VMInstance> => {
 
 export const writeData = (vm: VMInstance, data: Uint8Array): Region => {
   return vm.allocate_bytes(data);
+};
+
+export const writeObject = (vm: VMInstance, data: [Uint8Array]): Region => {
+  return vm.allocate_json(data);
 };
 
 describe('do_db_read', () => {
@@ -717,6 +729,38 @@ describe('do_ed25519_verify', () => {
     } catch (e) {
       expect(e).toEqual(new Error('Assertion failed'));
     }
+  });
+});
+
+describe('do_ed25519_batch_verify', () => {
+  let vm: VMInstance;
+  beforeEach(async () => {
+    vm = await createVM();
+  });
+
+  it('works', () => {
+    const hash_ptr = writeObject(vm, [ED25519_MSG_HEX]);
+    const sig_ptr = writeObject(vm, [ED25519_SIG_HEX]);
+    const pubkey_ptr = writeObject(vm, [ED25519_PUBKEY_HEX]);
+    const result = vm.do_ed25519_batch_verify(hash_ptr, sig_ptr, pubkey_ptr);
+    expect(result).toEqual(1);
+  });
+
+  it('fails for wrong msg', () => {
+    const msg = new Uint8Array([...ED25519_MSG_HEX, 0x01]);
+    const hash_ptr = writeObject(vm, [msg]);
+    const sig_ptr = writeObject(vm, [ED25519_SIG_HEX]);
+    const pubkey_ptr = writeObject(vm, [ED25519_PUBKEY_HEX]);
+    const result = vm.do_ed25519_batch_verify(hash_ptr, sig_ptr, pubkey_ptr);
+    expect(result).toEqual(1);
+  });
+
+  it('fails for invalid pubkey', () => {
+    const hash_ptr = writeObject(vm, [ED25519_MSG_HEX]);
+    const sig_ptr = writeObject(vm, [ED25519_SIG_HEX]);
+    const pubkey_ptr = writeObject(vm, [new Uint8Array(0)]);
+    const result = vm.do_ed25519_batch_verify(hash_ptr, sig_ptr, pubkey_ptr);
+    expect(result).toEqual(1);
   });
 });
 
