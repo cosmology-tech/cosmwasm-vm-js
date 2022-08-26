@@ -2,8 +2,8 @@
 import { readFileSync } from 'fs';
 import {
   BasicBackendApi,
-  BasicKVStorage,
   BasicQuerier,
+  BasicStorage,
   IBackend,
 } from '../src/backend';
 import {
@@ -60,7 +60,7 @@ export const createVM = async (): Promise<VMInstance> => {
   const wasm_byte_code = readFileSync('testdata/hackatom.wasm');
   const backend: IBackend = {
     backend_api: new BasicBackendApi('terra'),
-    storage: new BasicKVStorage(),
+    storage: new BasicStorage(),
     querier: new BasicQuerier(),
   };
 
@@ -73,6 +73,7 @@ export const createVM = async (): Promise<VMInstance> => {
 };
 
 export const writeData = (vm: VMInstance, data: Uint8Array): Region => {
+  // vm.backend.storage.set(data, VALUE1);
   return vm.allocate_bytes(data);
 };
 
@@ -787,6 +788,10 @@ describe('do_query_chain', () => {
 });
 
 describe('do_db_scan', () => {
+  let vm: VMInstance;
+  beforeEach(async () => {
+    vm = await createVM();
+  });
   it('unbound works', () => {});
   it('unbound descending works', () => {});
   it('bound works', () => {});
@@ -795,12 +800,12 @@ describe('do_db_scan', () => {
   it('fails for invalid order value', () => {});
 });
 
-describe('do_db_query', () => {
-  it('works', () => {});
-  it('fails for missing contract', () => {});
-});
-
 describe('do_db_next', () => {
+  let vm: VMInstance;
+  beforeEach(async () => {
+    vm = await createVM();
+  });
+
   it('works', () => {});
   it('fails for non existent id', () => {});
 });

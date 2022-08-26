@@ -9,5 +9,5 @@ export * from './storage';
 export interface IBackend {
   backend_api: BackendApi.IBackendApi;
   querier: Querier.IQuerier;
-  storage: Storage.IStorage;
+  storage: Storage.IIterStorage;
 }
