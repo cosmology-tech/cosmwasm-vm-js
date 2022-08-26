@@ -788,10 +788,6 @@ describe('do_query_chain', () => {
 });
 
 describe('do_db_scan', () => {
-  let vm: VMInstance;
-  beforeEach(async () => {
-    vm = await createVM();
-  });
   it('unbound works', () => {});
   it('unbound descending works', () => {});
   it('bound works', () => {});
@@ -801,11 +797,6 @@ describe('do_db_scan', () => {
 });
 
 describe('do_db_next', () => {
-  let vm: VMInstance;
-  beforeEach(async () => {
-    vm = await createVM();
-  });
-
   it('works', () => {});
   it('fails for non existent id', () => {});
 });
