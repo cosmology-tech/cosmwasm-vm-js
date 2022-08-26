@@ -48,7 +48,7 @@ export class VMInstance {
     this.instance = result.instance;
   }
 
-  protected get exports(): any {
+  public get exports(): any {
     if (!this.instance)
       throw new Error('Please init instance before using methods');
     return this.instance!.exports;
