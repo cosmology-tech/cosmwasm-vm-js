@@ -263,7 +263,8 @@ export class VMInstance {
   }
 
   do_db_next(iterator_id: number): Region {
-    throw new Error('not implemented');
+    this.backend.storage.next(iterator_id);
+    return new Region(this.exports.memory, 0);
   }
 
   do_addr_humanize(source: Region, destination: Region): Region {
@@ -321,6 +322,8 @@ export class VMInstance {
     return new Region(this.exports.memory, 0);
   }
 
+  // Verifies message hashes against a signature with a public key, using the secp256k1 ECDSA parametrization.
+  // Returns 0 on verification success, 1 on verification failure
   do_secp256k1_verify(hash: Region, signature: Region, pubkey: Region): number {
     console.log(
       `signature length: ${signature.str.length}, pubkey length: ${pubkey.str.length}, message length: ${hash.str.length}`
@@ -346,6 +349,8 @@ export class VMInstance {
     return ecdsaRecover(signature.data, recover_param, hash.data, false);
   }
 
+  // Verifies a message against a signature with a public key, using the ed25519 EdDSA scheme.
+  // Returns 0 on verification success, 1 on verification failure
   do_ed25519_verify(
     message: Region,
     signature: Region,
@@ -366,6 +371,9 @@ export class VMInstance {
     }
   }
 
+  // Verifies a batch of messages against a batch of signatures with a batch of public keys,
+  // using the ed25519 EdDSA scheme.
+  // Returns 0 on verification success (all batches verify correctly), 1 on verification failure
   do_ed25519_batch_verify(
     messages: Region,
     signatures: Region,
@@ -396,10 +404,10 @@ export class VMInstance {
       const isValidSignature = this.eddsa.verify(_msg, _signature, _pubkey);
 
       if (!isValidSignature) {
-        return 0;
+        return 1;
       }
     }
-    return 1;
+    return 0;
   }
 
   do_debug(message: Region) {

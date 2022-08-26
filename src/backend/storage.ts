@@ -72,7 +72,7 @@ export class BasicKVIterStorage implements IIterStorage {
   next(iterator_id: number): Record | null {
     const iter = this.iterators.get(iterator_id);
     if (iter === undefined) {
-      return null;
+      throw new Error(`Iterator ${iterator_id} not found.`);
     }
     const record = iter.data[iter.position];
     iter.position += 1;

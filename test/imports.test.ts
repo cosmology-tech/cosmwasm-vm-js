@@ -744,7 +744,7 @@ describe('do_ed25519_batch_verify', () => {
     const sig_ptr = writeObject(vm, [ED25519_SIG_HEX]);
     const pubkey_ptr = writeObject(vm, [ED25519_PUBKEY_HEX]);
     const result = vm.do_ed25519_batch_verify(hash_ptr, sig_ptr, pubkey_ptr);
-    expect(result).toEqual(1);
+    expect(result).toEqual(0);
   });
 
   it('fails for wrong msg', () => {
@@ -753,7 +753,7 @@ describe('do_ed25519_batch_verify', () => {
     const sig_ptr = writeObject(vm, [ED25519_SIG_HEX]);
     const pubkey_ptr = writeObject(vm, [ED25519_PUBKEY_HEX]);
     const result = vm.do_ed25519_batch_verify(hash_ptr, sig_ptr, pubkey_ptr);
-    expect(result).toEqual(0);
+    expect(result).toEqual(1);
   });
 
   it('fails for invalid pubkey', () => {
@@ -761,7 +761,7 @@ describe('do_ed25519_batch_verify', () => {
     const sig_ptr = writeObject(vm, [ED25519_SIG_HEX]);
     const pubkey_ptr = writeObject(vm, [new Uint8Array(0)]);
     const result = vm.do_ed25519_batch_verify(hash_ptr, sig_ptr, pubkey_ptr);
-    expect(result).toEqual(0);
+    expect(result).toEqual(1);
   });
 });
 
@@ -797,6 +797,17 @@ describe('do_db_scan', () => {
 });
 
 describe('do_db_next', () => {
+  let vm: VMInstance;
+  beforeEach(async () => {
+    vm = await createVM();
+  });
+
   it('works', () => {});
-  it('fails for non existent id', () => {});
+  it('fails for non existent id', () => {
+    try {
+      vm.do_db_next(0);
+    } catch (e) {
+      expect(e).toEqual(new Error('Iterator 0 not found.'));
+    }
+  });
 });
