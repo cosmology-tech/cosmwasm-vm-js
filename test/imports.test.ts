@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import {
   BasicBackendApi,
   BasicQuerier,
-  BasicStorage,
+  BasicKVIterStorage,
   IBackend,
 } from '../src/backend';
 import {
@@ -60,7 +60,7 @@ export const createVM = async (): Promise<VMInstance> => {
   const wasm_byte_code = readFileSync('testdata/hackatom.wasm');
   const backend: IBackend = {
     backend_api: new BasicBackendApi('terra'),
-    storage: new BasicStorage(),
+    storage: new BasicKVIterStorage(),
     querier: new BasicQuerier(),
   };
 

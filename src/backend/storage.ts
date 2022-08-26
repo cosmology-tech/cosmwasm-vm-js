@@ -36,7 +36,7 @@ export interface IIterStorage {
   clear(): void;
 }
 
-export class BasicStorage implements IIterStorage {
+export class BasicKVIterStorage implements IIterStorage {
   constructor(
     public data: Map<Uint8Array, Uint8Array> = new Map(),
     public iterators: Map<number, Iter> = new Map()
