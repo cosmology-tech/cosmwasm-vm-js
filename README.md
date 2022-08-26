@@ -30,7 +30,7 @@ yarn add cosmwasm-vm-js
 
 ```ts
 import { readFileSync } from 'fs';
-import { BasicKVStorage, VMInstance } from 'cosmwasm-vm-js';
+import { BasicKVIterStorage, VMInstance } from 'cosmwasm-vm-js';
 import {
   BasicBackendApi,
   BasicQuerier,
@@ -40,7 +40,7 @@ import {
 const wasm_byte_code = readFileSync('testdata/cosmwasm_vm_test.wasm');
 const backend: IBackend = {
   backend_api: new BasicBackendApi('terra'),
-  storage: new BasicKVStorage(),
+  storage: new BasicKVIterStorage(),
   querier: new BasicQuerier(),
 };
 
@@ -135,32 +135,32 @@ and more.
 The following WASM imports have been implemented according to `imports.rs` in `cosmwasm-vm`.
 
 | Import Name                | Implemented?       | Tested?            | Notes                                        |
-| -------------------------- | ------------------ | ------------------ | -------------------------------------------- |
+| -------------------------- |--------------------|--------------------| -------------------------------------------- |
 | `db_read`                  | :white_check_mark: | :white_check_mark: |                                              |
 | `db_write`                 | :white_check_mark: | :white_check_mark: |                                              |
 | `db_remove`                | :white_check_mark: | :white_check_mark: |                                              |
 | `db_scan`                  | :x:                | :x:                |                                              |
-| `db_next`                  | :x:                | :x:                |                                              |
+| `db_next`                  | :white_check_mark: | :x:                |                                              |
 | `addr_humanize`            | :white_check_mark: | :white_check_mark: |                                              |
 | `addr_canonicalize`        | :white_check_mark: | :white_check_mark: |                                              |
 | `addr_validate`            | :white_check_mark: | :white_check_mark: |                                              |
 | `secp256k1_verify`         | :white_check_mark: | :white_check_mark: |                                              |
 | `secp256k1_recover_pubkey` | :white_check_mark: | :white_check_mark: |                                              |
 | `ed25519_verify`           | :white_check_mark: | :white_check_mark: |                                              |
-| `ed25519_batch_verify`     | :x:                | :x:                |                                              |
-| `debug`                    | :x:                | :x:                | Defers to user-supplied debug functionality. |
+| `ed25519_batch_verify`     | :white_check_mark: | :white_check_mark: |                                              |
+| `debug`                    | :white_check_mark: | :x:                | Defers to user-supplied debug functionality. |
 | `query_chain`              | :x:                | :x:                |                                              |
-| `abort`                    | :x:                | :x:                |                                              |
+| `abort`                    | :white_check_mark: | :x:                |                                              |
 
 ## Environment & Storage
 
-We provide a simple key-value store with bytes keys and bytes values in `BasicKVStorage`.
+We provide a simple key-value store with bytes keys and bytes values in `BasicKVIterStorage`.
 
 ### WebAssembly Linear Memory
 
 A loaded CosmWasm contract module's linear memory is accessible as `WebAssembly.Memory`, which can be read as a
 bytearray through
-JavaScript's `Uint8Array` type.
+JavaScript's `Uint8Array` data type.
 
 ### Passing data from JavaScript to WASM
 

@@ -9,6 +9,11 @@ export interface IStorage {
   remove(key: Uint8Array): void;
 }
 
+export class Record {
+  public key: Uint8Array = Uint8Array.from([]);
+  public value: Uint8Array = Uint8Array.from([]);
+}
+
 export interface Iter {
   data: Array<Record>;
   position: number;
@@ -98,9 +103,4 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
   scan(start: Uint8Array | null, end: Uint8Array | null, order: Order): number {
     throw new Error('Not implemented');
   }
-}
-
-export class Record {
-  public key: Uint8Array = Uint8Array.from([]);
-  public value: Uint8Array = Uint8Array.from([]);
 }
