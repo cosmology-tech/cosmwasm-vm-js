@@ -1,4 +1,4 @@
-import { IBackendApi, IQuerier, IStorage } from 'backend';
+import { IBackendApi, IIterStorage, IQuerier, IStorage } from 'backend';
 
 export interface IEnvironment {
   call_function(name: string, args: object[]): object;
@@ -17,13 +17,13 @@ export interface ContextData {
 }
 
 export class Environment {
-  public storage: IStorage;
+  public storage: IIterStorage;
   public querier: IQuerier;
   public backendApi: IBackendApi;
   public data: ContextData;
 
   constructor(
-    storage: IStorage,
+    storage: IIterStorage,
     querier: IQuerier,
     backendApi: IBackendApi,
     data: ContextData

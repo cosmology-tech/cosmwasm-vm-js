@@ -2,8 +2,8 @@
 import { readFileSync } from 'fs';
 import {
   BasicBackendApi,
-  BasicKVStorage,
   BasicQuerier,
+  BasicKVIterStorage,
   IBackend,
 } from '../src/backend';
 import {
@@ -60,7 +60,7 @@ export const createVM = async (): Promise<VMInstance> => {
   const wasm_byte_code = readFileSync('testdata/hackatom.wasm');
   const backend: IBackend = {
     backend_api: new BasicBackendApi('terra'),
-    storage: new BasicKVStorage(),
+    storage: new BasicKVIterStorage(),
     querier: new BasicQuerier(),
   };
 
@@ -73,6 +73,7 @@ export const createVM = async (): Promise<VMInstance> => {
 };
 
 export const writeData = (vm: VMInstance, data: Uint8Array): Region => {
+  // vm.backend.storage.set(data, VALUE1);
   return vm.allocate_bytes(data);
 };
 
@@ -743,7 +744,7 @@ describe('do_ed25519_batch_verify', () => {
     const sig_ptr = writeObject(vm, [ED25519_SIG_HEX]);
     const pubkey_ptr = writeObject(vm, [ED25519_PUBKEY_HEX]);
     const result = vm.do_ed25519_batch_verify(hash_ptr, sig_ptr, pubkey_ptr);
-    expect(result).toEqual(1);
+    expect(result).toEqual(0);
   });
 
   it('fails for wrong msg', () => {
@@ -752,7 +753,7 @@ describe('do_ed25519_batch_verify', () => {
     const sig_ptr = writeObject(vm, [ED25519_SIG_HEX]);
     const pubkey_ptr = writeObject(vm, [ED25519_PUBKEY_HEX]);
     const result = vm.do_ed25519_batch_verify(hash_ptr, sig_ptr, pubkey_ptr);
-    expect(result).toEqual(0);
+    expect(result).toEqual(1);
   });
 
   it('fails for invalid pubkey', () => {
@@ -760,7 +761,7 @@ describe('do_ed25519_batch_verify', () => {
     const sig_ptr = writeObject(vm, [ED25519_SIG_HEX]);
     const pubkey_ptr = writeObject(vm, [new Uint8Array(0)]);
     const result = vm.do_ed25519_batch_verify(hash_ptr, sig_ptr, pubkey_ptr);
-    expect(result).toEqual(0);
+    expect(result).toEqual(1);
   });
 });
 
@@ -795,12 +796,18 @@ describe('do_db_scan', () => {
   it('fails for invalid order value', () => {});
 });
 
-describe('do_db_query', () => {
-  it('works', () => {});
-  it('fails for missing contract', () => {});
-});
-
 describe('do_db_next', () => {
+  let vm: VMInstance;
+  beforeEach(async () => {
+    vm = await createVM();
+  });
+
   it('works', () => {});
-  it('fails for non existent id', () => {});
+  it('fails for non existent id', () => {
+    try {
+      vm.do_db_next(0);
+    } catch (e) {
+      expect(e).toEqual(new Error('Iterator 0 not found.'));
+    }
+  });
 });
