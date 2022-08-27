@@ -3,7 +3,7 @@ import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { eddsa } from 'elliptic';
-import { IBackend } from './backend';
+import { IBackend, Record } from './backend';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -263,8 +263,14 @@ export class VMInstance {
   }
 
   do_db_next(iterator_id: number): Region {
-    this.backend.storage.next(iterator_id);
-    return new Region(this.exports.memory, 0);
+    const record: Record | null = this.backend.storage.next(iterator_id);
+    let result;
+    if (record === null) {
+      result = this.region(0);
+    } else {
+      result = this.allocate_json(record);
+    }
+    return result;
   }
 
   do_addr_humanize(source: Region, destination: Region): Region {
