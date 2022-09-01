@@ -423,6 +423,7 @@ describe('do_secp256k1_verify', () => {
       );
     }
   });
+
   it('fails for invalid signature', () => {
     const sig = testData.ECDSA_SIG_HEX;
     sig[0] ^= 0x01;
@@ -459,6 +460,7 @@ describe('do_secp256k1_verify', () => {
       );
     }
   });
+
   it('fails for wrong pubkey format', () => {
     try {
       const pubKey = testData.ECDSA_PUBKEY_HEX;
@@ -794,7 +796,7 @@ describe('db_scan', () => {
     expectEntryToBe(testData.KEY1, testData.VALUE1, vm.do_db_next(id1)); // first item, first iterator
     expectEntryToBe(testData.KEY2, testData.VALUE2, vm.do_db_next(id1)); // second item, first iterator
     expectEntryToBe(testData.KEY2, testData.VALUE2, vm.do_db_next(id2)); // first item, second iterator
-    expect(vm.do_db_next(id1).ptr).toBe(0);            // end, first iterator
+    expect(vm.do_db_next(id1).ptr).toBe(0);                              // end, first iterator
     expectEntryToBe(testData.KEY1, testData.VALUE1, vm.do_db_next(id2)); // second item, second iterator
   });
 
@@ -832,7 +834,9 @@ describe('db_next', () => {
   });
 });
 
-// test helpers
+//////////////////
+// test helpers //
+//////////////////
 
 function expectEntryToBe(
   expectedKey: Uint8Array,
