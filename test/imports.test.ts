@@ -802,16 +802,18 @@ describe('do_db_scan', () => {
     const id = bytesToNumber(id_region.data);
     expect(id).toBe(1);
 
-    // ToDo: check keys match
-
     let item = vm.do_db_next(id);
     let json = JSON.parse(fromAscii(item.data));
+    let key = new Uint8Array(Object.values(json.key));
     let value = new Uint8Array(Object.values(json.value));
+    expect(key).toStrictEqual(KEY1);
     expect(value).toStrictEqual(VALUE1);
 
     item = vm.do_db_next(id);
     json = JSON.parse(fromAscii(item.data));
+    key = new Uint8Array(Object.values(json.key));
     value = new Uint8Array(Object.values(json.value));
+    expect(key).toStrictEqual(KEY2);
     expect(value).toStrictEqual(VALUE2);
   });
 
@@ -823,12 +825,16 @@ describe('do_db_scan', () => {
 
     let item = vm.do_db_next(id);
     let json = JSON.parse(fromAscii(item.data));
+    let key = new Uint8Array(Object.values(json.key));
     let value = new Uint8Array(Object.values(json.value));
+    expect(key).toStrictEqual(KEY2);
     expect(value).toStrictEqual(VALUE2);
 
     item = vm.do_db_next(id);
     json = JSON.parse(fromAscii(item.data));
+    key = new Uint8Array(Object.values(json.key));
     value = new Uint8Array(Object.values(json.value));
+    expect(key).toStrictEqual(KEY1);
     expect(value).toStrictEqual(VALUE1);
   });
 
