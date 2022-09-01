@@ -110,12 +110,12 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
       throw new Error(`Invalid order value ${order}.`);
     }
 
-    const new_id = this.iterators.size + 1;
+    const newId = this.iterators.size + 1;
 
     // if start > end, this represents an empty range
     if (start.length && end.length && arrayCompare(start, end) === 1) {
-      this.iterators.set(new_id, { data: [], position: 0 });
-      return new_id;
+      this.iterators.set(newId, { data: [], position: 0 });
+      return newId;
     }
 
     let data: Record[] = [];
@@ -130,7 +130,7 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
       data = data.reverse();
     }
 
-    this.iterators.set(new_id, { data, position: 0 });
-    return new_id;
+    this.iterators.set(newId, { data, position: 0 });
+    return newId;
   }
 }
