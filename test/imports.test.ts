@@ -807,7 +807,9 @@ describe('do_db_scan', () => {
 
   it('unbound works', () => {
     const zeroRegion = writeData(vm, numberToBytes(0));
-    const id_region = vm.do_db_scan(zeroRegion, zeroRegion, Order.Ascending);
+
+    const id_region_ptr = vm.do_db_scan(zeroRegion, zeroRegion, Order.Ascending);
+    const id_region = vm.region(id_region_ptr);
     const id = bytesToNumber(id_region.data);
     expect(id).toBe(1);
 
@@ -820,7 +822,9 @@ describe('do_db_scan', () => {
 
   it('unbound descending works', () => {
     const zeroRegion = writeData(vm, numberToBytes(0));
-    const id_region = vm.do_db_scan(zeroRegion, zeroRegion, Order.Descending);
+
+    const id_region_ptr = vm.do_db_scan(zeroRegion, zeroRegion, Order.Descending);
+    const id_region = vm.region(id_region_ptr);
     const id = bytesToNumber(id_region.data);
     expect(id).toBe(1);
 

@@ -137,8 +137,8 @@ export class VMInstance {
   db_scan(start_ptr: number, end_ptr: number, order: number): number {
     let start = this.region(start_ptr);
     let end = this.region(end_ptr);
-    const region = this.do_db_scan(start, end, order);
-    return bytesToNumber(region.data);
+    const region_ptr = this.do_db_scan(start, end, order);
+    return bytesToNumber(this.region(region_ptr).data);
   }
 
   db_next(iterator_id: number): number {
@@ -261,13 +261,13 @@ export class VMInstance {
     this.backend.storage.remove(key.data);
   }
 
-  do_db_scan(start: Region, end: Region, order: number): Region {
+  do_db_scan(start: Region, end: Region, order: number): number {
     const iter_id = this.backend.storage.scan(start.data, end.data, order);
     const iter_id_bytes = numberToBytes(iter_id);
 
     let region = this.allocate(iter_id_bytes.length);
     region.write(iter_id_bytes);
-    return region;
+    return region.ptr;
   }
 
   do_db_next(iterator_id: number): Region {
