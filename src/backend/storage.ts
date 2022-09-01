@@ -106,7 +106,7 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
   }
 
   scan(start: Uint8Array, end: Uint8Array, order: Order): number {
-    const new_id = this.iterators.entries.length + 1;
+    const new_id = this.iterators.size + 1;
 
     // if start > end, this represents an empty range
     if (start.length && end.length && array_compare(start, end) === 1) {

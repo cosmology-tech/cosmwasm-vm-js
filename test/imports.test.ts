@@ -855,7 +855,21 @@ describe('db_scan', () => {
     expect(item.ptr).toBe(0);
   });
 
-  it('multiple iterators', () => {});
+  it('multiple iterators', () => {
+    const id_region_ptr1 = vm.db_scan(0, 0, Order.Ascending);
+    const id1 = fromRegionPtr(vm, id_region_ptr1);
+    expect(id1).toBe(1);
+
+    const id_region_ptr2 = vm.db_scan(0, 0, Order.Descending);
+    const id2 = fromRegionPtr(vm, id_region_ptr2);
+    expect(id2).toBe(2);
+
+    expectEntryToBe(KEY1, VALUE1, vm.do_db_next(id1)); // first item, first iterator
+    expectEntryToBe(KEY2, VALUE2, vm.do_db_next(id1)); // second item, first iterator
+    expectEntryToBe(KEY2, VALUE2, vm.do_db_next(id2)); // first item, second iterator
+    expect(vm.do_db_next(id1).ptr).toBe(0);            // end, first iterator
+    expectEntryToBe(KEY1, VALUE1, vm.do_db_next(id2)); // second item, second iterator
+  });
   it('fails for invalid order value', () => {});
 });
 
