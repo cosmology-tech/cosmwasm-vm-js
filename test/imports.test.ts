@@ -1,14 +1,14 @@
 import { toAscii, fromAscii } from '@cosmjs/encoding';
-import { Order } from '../src/backend';
-import {
-  MAX_LENGTH_CANONICAL_ADDRESS,
-  MAX_LENGTH_HUMAN_ADDRESS,
-  Region,
-  VMInstance,
-} from '../src';
-import bytesToNumber from '../src/lib/bytes-to-number';
 import { createVM, writeData, writeObject } from './common/test-vm';
 import * as testData from './common/test-data';
+import {
+  VMInstance,
+  MAX_LENGTH_CANONICAL_ADDRESS,
+  MAX_LENGTH_HUMAN_ADDRESS,
+  Order,
+  Region
+} from '../src';
+import bytesToNumber from '../src/lib/bytes-to-number';
 
 describe('do_db_read', () => {
   let vm: VMInstance;
@@ -834,10 +834,14 @@ describe('db_next', () => {
 
 // test helpers
 
-function expectEntryToBe(expectedKey: Uint8Array, expectedValue: Uint8Array, actualItem: Region) {
-  let json = JSON.parse(fromAscii(actualItem.data));
-  let key = new Uint8Array(Object.values(json.key));
-  let value = new Uint8Array(Object.values(json.value));
+function expectEntryToBe(
+  expectedKey: Uint8Array,
+  expectedValue: Uint8Array,
+  actualItem: Region
+) {
+  const json = JSON.parse(fromAscii(actualItem.data));
+  const key = new Uint8Array(Object.values(json.key));
+  const value = new Uint8Array(Object.values(json.value));
 
   expect(key).toStrictEqual(expectedKey);
   expect(value).toStrictEqual(expectedValue);
