@@ -41,5 +41,6 @@
         "src/*"
       ]
     }
-  }
+  },
+  "typeAcquisition": { "include": ["jest"] }
 }

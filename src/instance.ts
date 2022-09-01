@@ -4,6 +4,8 @@ import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { eddsa } from 'elliptic';
 import { IBackend, Record } from './backend';
+import numberToBytes from './lib/number-to-bytes';
+import bytesToNumber from './lib/bytes-to-number';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -259,7 +261,12 @@ export class VMInstance {
   }
 
   do_db_scan(start: Region, end: Region, order: number): Region {
-    throw new Error('not implemented');
+    const iter_id = this.backend.storage.scan(start.data, end.data, order);
+    const iter_id_bytes = numberToBytes(iter_id);
+
+    let region = this.allocate(iter_id_bytes.length);
+    region.write(iter_id_bytes);
+    return region;
   }
 
   do_db_next(iterator_id: number): Region {

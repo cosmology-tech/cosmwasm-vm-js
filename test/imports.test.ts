@@ -1,10 +1,12 @@
 /* Constants from https://github.com/cosmwasm/cosmwasm/blob/5e04c3c1aa7e278626196de43aa18e9bedbc6000/packages/vm/src/imports.rs#L499 */
 import { readFileSync } from 'fs';
+import { fromHex, toAscii, fromAscii } from '@cosmjs/encoding';
 import {
   BasicBackendApi,
   BasicQuerier,
   BasicKVIterStorage,
   IBackend,
+  Order,
 } from '../src/backend';
 import {
   MAX_LENGTH_CANONICAL_ADDRESS,
@@ -12,7 +14,8 @@ import {
   Region,
   VMInstance,
 } from '../src';
-import { fromHex, toAscii } from '@cosmjs/encoding';
+import bytesToNumber from '../src/lib/bytes-to-number';
+import numberToBytes from '../src/lib/number-to-bytes';
 
 // In Rust, b"XXX" is the same as creating a bytestring of the ASCII-encoded string "XXX".
 const KEY1 = toAscii('ant');
@@ -787,22 +790,113 @@ describe('do_query_chain', () => {
   it('fails for missing contract', () => {});
 });
 
-describe('do_db_scan', () => {
-  it('unbound works', () => {});
-  it('unbound descending works', () => {});
-  it('bound works', () => {});
-  it('bound descending works', () => {});
-  it('multiple iterators', () => {});
-  it('fails for invalid order value', () => {});
-});
-
-describe('do_db_next', () => {
+describe('db_scan', () => {
   let vm: VMInstance;
   beforeEach(async () => {
     vm = await createVM();
   });
 
-  it('works', () => {});
+  it('unbound works', () => {
+    const id_region_ptr = vm.db_scan(0, 0, Order.Ascending);
+    const id = fromRegionPtr(vm, id_region_ptr);
+    expect(id).toBe(1);
+
+    let item = vm.do_db_next(id);
+    expectEntryToBe(KEY1, VALUE1, item);
+
+    item = vm.do_db_next(id);
+    expectEntryToBe(KEY2, VALUE2, item);
+
+    item = vm.do_db_next(id);
+    expect(item.ptr).toBe(0);
+  });
+
+  it('unbound descending works', () => {
+    const id_region_ptr = vm.db_scan(0, 0, Order.Descending);
+    const id = fromRegionPtr(vm, id_region_ptr);
+    expect(id).toBe(1);
+
+    let item = vm.do_db_next(id);
+    expectEntryToBe(KEY2, VALUE2, item);
+
+    item = vm.do_db_next(id);
+    expectEntryToBe(KEY1, VALUE1, item);
+
+    item = vm.do_db_next(id);
+    expect(item.ptr).toBe(0);
+  });
+
+  it('bound works', () => {
+    const start_region_ptr = writeData(vm, toAscii('anna')).ptr;
+    const end_region_ptr = writeData(vm, toAscii('bert')).ptr;
+
+    const id_region_ptr = vm.db_scan(start_region_ptr, end_region_ptr, Order.Ascending);
+    const id = fromRegionPtr(vm, id_region_ptr);
+    expect(id).toBe(1);
+
+    let item = vm.do_db_next(id);
+    expectEntryToBe(KEY1, VALUE1, item);
+
+    item = vm.do_db_next(id);
+    expect(item.ptr).toBe(0);
+  });
+
+  it('bound descending works', () => {
+    const start_region_ptr = writeData(vm, toAscii('antler')).ptr;
+    const end_region_ptr = writeData(vm, toAscii('trespass')).ptr;
+
+    const id_region_ptr = vm.db_scan(start_region_ptr, end_region_ptr, Order.Descending);
+    const id = fromRegionPtr(vm, id_region_ptr);
+    expect(id).toBe(1);
+
+    let item = vm.do_db_next(id);
+    expectEntryToBe(KEY2, VALUE2, item);
+
+    item = vm.do_db_next(id);
+    expect(item.ptr).toBe(0);
+  });
+
+  it('multiple iterators', () => {
+    const id_region_ptr1 = vm.db_scan(0, 0, Order.Ascending);
+    const id1 = fromRegionPtr(vm, id_region_ptr1);
+    expect(id1).toBe(1);
+
+    const id_region_ptr2 = vm.db_scan(0, 0, Order.Descending);
+    const id2 = fromRegionPtr(vm, id_region_ptr2);
+    expect(id2).toBe(2);
+
+    expectEntryToBe(KEY1, VALUE1, vm.do_db_next(id1)); // first item, first iterator
+    expectEntryToBe(KEY2, VALUE2, vm.do_db_next(id1)); // second item, first iterator
+    expectEntryToBe(KEY2, VALUE2, vm.do_db_next(id2)); // first item, second iterator
+    expect(vm.do_db_next(id1).ptr).toBe(0);            // end, first iterator
+    expectEntryToBe(KEY1, VALUE1, vm.do_db_next(id2)); // second item, second iterator
+  });
+
+  it('fails for invalid order value', () => {
+    expect(() => vm.db_scan(0, 0, 42)).toThrow();
+  });
+});
+
+describe('db_next', () => {
+  let vm: VMInstance;
+  beforeEach(async () => {
+    vm = await createVM();
+  });
+
+  it('works', () => {
+    const id_region_ptr = vm.db_scan(0, 0, Order.Ascending);
+    const id = fromRegionPtr(vm, id_region_ptr);
+
+    let kv_region_ptr = vm.db_next(id);
+    expectEntryToBe(KEY1, VALUE1, vm.region(kv_region_ptr));
+
+    kv_region_ptr = vm.db_next(id);
+    expectEntryToBe(KEY2, VALUE2, vm.region(kv_region_ptr));
+
+    kv_region_ptr = vm.db_next(id);
+    expect(kv_region_ptr).toBe(0);
+  });
+
   it('fails for non existent id', () => {
     try {
       vm.do_db_next(0);
@@ -811,3 +905,19 @@ describe('do_db_next', () => {
     }
   });
 });
+
+// test helpers
+
+function expectEntryToBe(expectedKey: Uint8Array, expectedValue: Uint8Array, actualItem: Region) {
+  let json = JSON.parse(fromAscii(actualItem.data));
+  let key = new Uint8Array(Object.values(json.key));
+  let value = new Uint8Array(Object.values(json.value));
+
+  expect(key).toStrictEqual(expectedKey);
+  expect(value).toStrictEqual(expectedValue);
+}
+
+function fromRegionPtr(vm: VMInstance, regionPtr: number): number {
+  const region = vm.region(regionPtr);
+  return bytesToNumber(region.data);
+}
