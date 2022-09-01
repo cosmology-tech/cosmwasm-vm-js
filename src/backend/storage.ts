@@ -106,6 +106,10 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
   }
 
   scan(start: Uint8Array, end: Uint8Array, order: Order): number {
+    if (order !== Order.Ascending && order !== Order.Descending) {
+      throw new Error(`Invalid order value ${order}.`);
+    }
+
     const new_id = this.iterators.size + 1;
 
     // if start > end, this represents an empty range

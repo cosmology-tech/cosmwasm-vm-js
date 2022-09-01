@@ -870,7 +870,10 @@ describe('db_scan', () => {
     expect(vm.do_db_next(id1).ptr).toBe(0);            // end, first iterator
     expectEntryToBe(KEY1, VALUE1, vm.do_db_next(id2)); // second item, second iterator
   });
-  it('fails for invalid order value', () => {});
+
+  it('fails for invalid order value', () => {
+    expect(() => vm.db_scan(0, 0, 42)).toThrow();
+  });
 });
 
 describe('do_db_next', () => {
