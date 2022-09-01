@@ -15,7 +15,6 @@ import {
   VMInstance,
 } from '../src';
 import bytesToNumber from '../src/lib/bytes-to-number';
-import numberToBytes from '../src/lib/number-to-bytes';
 
 // In Rust, b"XXX" is the same as creating a bytestring of the ASCII-encoded string "XXX".
 const KEY1 = toAscii('ant');
@@ -830,7 +829,11 @@ describe('db_scan', () => {
     const start_region_ptr = writeData(vm, toAscii('anna')).ptr;
     const end_region_ptr = writeData(vm, toAscii('bert')).ptr;
 
-    const id_region_ptr = vm.db_scan(start_region_ptr, end_region_ptr, Order.Ascending);
+    const id_region_ptr = vm.db_scan(
+      start_region_ptr,
+      end_region_ptr,
+      Order.Ascending
+    );
     const id = fromRegionPtr(vm, id_region_ptr);
     expect(id).toBe(1);
 
@@ -845,7 +848,11 @@ describe('db_scan', () => {
     const start_region_ptr = writeData(vm, toAscii('antler')).ptr;
     const end_region_ptr = writeData(vm, toAscii('trespass')).ptr;
 
-    const id_region_ptr = vm.db_scan(start_region_ptr, end_region_ptr, Order.Descending);
+    const id_region_ptr = vm.db_scan(
+      start_region_ptr,
+      end_region_ptr,
+      Order.Descending
+    );
     const id = fromRegionPtr(vm, id_region_ptr);
     expect(id).toBe(1);
 
@@ -868,7 +875,7 @@ describe('db_scan', () => {
     expectEntryToBe(KEY1, VALUE1, vm.do_db_next(id1)); // first item, first iterator
     expectEntryToBe(KEY2, VALUE2, vm.do_db_next(id1)); // second item, first iterator
     expectEntryToBe(KEY2, VALUE2, vm.do_db_next(id2)); // first item, second iterator
-    expect(vm.do_db_next(id1).ptr).toBe(0);            // end, first iterator
+    expect(vm.do_db_next(id1).ptr).toBe(0); // end, first iterator
     expectEntryToBe(KEY1, VALUE1, vm.do_db_next(id2)); // second item, second iterator
   });
 
@@ -908,10 +915,14 @@ describe('db_next', () => {
 
 // test helpers
 
-function expectEntryToBe(expectedKey: Uint8Array, expectedValue: Uint8Array, actualItem: Region) {
-  let json = JSON.parse(fromAscii(actualItem.data));
-  let key = new Uint8Array(Object.values(json.key));
-  let value = new Uint8Array(Object.values(json.value));
+function expectEntryToBe(
+  expectedKey: Uint8Array,
+  expectedValue: Uint8Array,
+  actualItem: Region
+) {
+  const json = JSON.parse(fromAscii(actualItem.data));
+  const key = new Uint8Array(Object.values(json.key));
+  const value = new Uint8Array(Object.values(json.value));
 
   expect(key).toStrictEqual(expectedKey);
   expect(value).toStrictEqual(expectedValue);

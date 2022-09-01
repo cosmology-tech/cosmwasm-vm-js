@@ -5,7 +5,6 @@ import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { eddsa } from 'elliptic';
 import { IBackend, Record } from './backend';
 import numberToBytes from './lib/number-to-bytes';
-import bytesToNumber from './lib/bytes-to-number';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
