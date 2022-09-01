@@ -59,7 +59,7 @@ const ED25519_PUBKEY_HEX = fromHex(
   '3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c'
 );
 
-export const createVM = async (): Promise<VMInstance> => {
+async function createVM(): Promise<VMInstance> {
   const wasm_byte_code = readFileSync('testdata/hackatom.wasm');
   const backend: IBackend = {
     backend_api: new BasicBackendApi('terra'),
@@ -75,14 +75,22 @@ export const createVM = async (): Promise<VMInstance> => {
   return vm;
 };
 
-export const writeData = (vm: VMInstance, data: Uint8Array): Region => {
+function writeData(vm: VMInstance, data: Uint8Array): Region {
   // vm.backend.storage.set(data, VALUE1);
   return vm.allocate_bytes(data);
 };
 
-export const writeObject = (vm: VMInstance, data: [Uint8Array]): Region => {
+function writeObject(vm: VMInstance, data: [Uint8Array]): Region {
   return vm.allocate_json(data);
 };
+
+function expectEntryToBe(expected_key: Uint8Array, expected_value: Uint8Array, actual_item: Region) {
+  let json = JSON.parse(fromAscii(actual_item.data));
+  let key = new Uint8Array(Object.values(json.key));
+  let value = new Uint8Array(Object.values(json.value));
+  expect(key).toStrictEqual(expected_key);
+  expect(value).toStrictEqual(expected_value);
+}
 
 describe('do_db_read', () => {
   let vm: VMInstance;
@@ -803,18 +811,10 @@ describe('do_db_scan', () => {
     expect(id).toBe(1);
 
     let item = vm.do_db_next(id);
-    let json = JSON.parse(fromAscii(item.data));
-    let key = new Uint8Array(Object.values(json.key));
-    let value = new Uint8Array(Object.values(json.value));
-    expect(key).toStrictEqual(KEY1);
-    expect(value).toStrictEqual(VALUE1);
+    expectEntryToBe(KEY1, VALUE1, item);
 
     item = vm.do_db_next(id);
-    json = JSON.parse(fromAscii(item.data));
-    key = new Uint8Array(Object.values(json.key));
-    value = new Uint8Array(Object.values(json.value));
-    expect(key).toStrictEqual(KEY2);
-    expect(value).toStrictEqual(VALUE2);
+    expectEntryToBe(KEY2, VALUE2, item);
   });
 
   it('unbound descending works', () => {
@@ -824,18 +824,10 @@ describe('do_db_scan', () => {
     expect(id).toBe(1);
 
     let item = vm.do_db_next(id);
-    let json = JSON.parse(fromAscii(item.data));
-    let key = new Uint8Array(Object.values(json.key));
-    let value = new Uint8Array(Object.values(json.value));
-    expect(key).toStrictEqual(KEY2);
-    expect(value).toStrictEqual(VALUE2);
+    expectEntryToBe(KEY2, VALUE2, item);
 
     item = vm.do_db_next(id);
-    json = JSON.parse(fromAscii(item.data));
-    key = new Uint8Array(Object.values(json.key));
-    value = new Uint8Array(Object.values(json.value));
-    expect(key).toStrictEqual(KEY1);
-    expect(value).toStrictEqual(VALUE1);
+    expectEntryToBe(KEY1, VALUE1, item);
   });
 
   it('bound works', () => {});
