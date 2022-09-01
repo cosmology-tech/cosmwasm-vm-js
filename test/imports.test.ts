@@ -59,7 +59,7 @@ const ED25519_PUBKEY_HEX = fromHex(
   '3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c'
 );
 
-async function createVM(): Promise<VMInstance> {
+export const createVM = async (): Promise<VMInstance> => {
   const wasm_byte_code = readFileSync('testdata/hackatom.wasm');
   const backend: IBackend = {
     backend_api: new BasicBackendApi('terra'),
@@ -75,12 +75,12 @@ async function createVM(): Promise<VMInstance> {
   return vm;
 };
 
-function writeData(vm: VMInstance, data: Uint8Array): Region {
+export const writeData = (vm: VMInstance, data: Uint8Array): Region => {
   // vm.backend.storage.set(data, VALUE1);
   return vm.allocate_bytes(data);
 };
 
-function writeObject(vm: VMInstance, data: [Uint8Array]): Region {
+export const writeObject = (vm: VMInstance, data: [Uint8Array]): Region => {
   return vm.allocate_json(data);
 };
 
@@ -88,6 +88,7 @@ function expectEntryToBe(expected_key: Uint8Array, expected_value: Uint8Array, a
   let json = JSON.parse(fromAscii(actual_item.data));
   let key = new Uint8Array(Object.values(json.key));
   let value = new Uint8Array(Object.values(json.value));
+
   expect(key).toStrictEqual(expected_key);
   expect(value).toStrictEqual(expected_value);
 }
@@ -830,7 +831,6 @@ describe('do_db_scan', () => {
     expectEntryToBe(KEY1, VALUE1, item);
   });
 
-  it('bound works', () => {});
   it('bound descending works', () => {});
   it('multiple iterators', () => {});
   it('fails for invalid order value', () => {});
