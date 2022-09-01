@@ -875,7 +875,7 @@ describe('db_scan', () => {
     expectEntryToBe(KEY1, VALUE1, vm.do_db_next(id1)); // first item, first iterator
     expectEntryToBe(KEY2, VALUE2, vm.do_db_next(id1)); // second item, first iterator
     expectEntryToBe(KEY2, VALUE2, vm.do_db_next(id2)); // first item, second iterator
-    expect(vm.do_db_next(id1).ptr).toBe(0); // end, first iterator
+    expect(vm.do_db_next(id1).ptr).toBe(0);            // end, first iterator
     expectEntryToBe(KEY1, VALUE1, vm.do_db_next(id2)); // second item, second iterator
   });
 
