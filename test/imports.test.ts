@@ -15,6 +15,7 @@ import {
   VMInstance,
 } from '../src';
 import bytesToNumber from '../src/lib/bytes-to-number';
+import numberToBytes from '../src/lib/number-to-bytes';
 
 // In Rust, b"XXX" is the same as creating a bytestring of the ASCII-encoded string "XXX".
 const KEY1 = toAscii('ant');
@@ -876,13 +877,26 @@ describe('db_scan', () => {
   });
 });
 
-describe('do_db_next', () => {
+describe('db_next', () => {
   let vm: VMInstance;
   beforeEach(async () => {
     vm = await createVM();
   });
 
-  it('works', () => {});
+  it('works', () => {
+    const id_region_ptr = vm.db_scan(0, 0, Order.Ascending);
+    const id = fromRegionPtr(vm, id_region_ptr);
+
+    let kv_region_ptr = vm.db_next(id);
+    expectEntryToBe(KEY1, VALUE1, vm.region(kv_region_ptr));
+
+    kv_region_ptr = vm.db_next(id);
+    expectEntryToBe(KEY2, VALUE2, vm.region(kv_region_ptr));
+
+    kv_region_ptr = vm.db_next(id);
+    expect(kv_region_ptr).toBe(0);
+  });
+
   it('fails for non existent id', () => {
     try {
       vm.do_db_next(0);
