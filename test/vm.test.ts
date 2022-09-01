@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { BasicKVIterStorage, VMInstance } from '../src';
 import { BasicBackendApi, BasicQuerier, IBackend } from '../src/backend';
 
-const wasm_byte_code = readFileSync('testdata/cosmwasm_vm_test.wasm');
+const wasmByteCode = readFileSync('testdata/cosmwasm_vm_test.wasm');
 const backend: IBackend = {
   backend_api: new BasicBackendApi('terra'),
   storage: new BasicKVIterStorage(),
@@ -10,7 +10,7 @@ const backend: IBackend = {
 };
 
 const vm = new VMInstance(backend);
-const mock_env = {
+const mockEnv = {
   block: {
     height: 1337,
     time: '2000000000',
@@ -21,16 +21,16 @@ const mock_env = {
   },
 };
 
-const mock_info = {
+const mockInfo = {
   sender: 'terra1337xewwfv3jdjuz8e0nea9vd8dpugc0k2dcyt3',
   funds: [],
 };
 
 describe('CosmWasmVM', () => {
   it('instantiates', async () => {
-    await vm.build(wasm_byte_code);
+    await vm.build(wasmByteCode);
 
-    const region = vm.instantiate(mock_env, mock_info, { count: 20 });
+    const region = vm.instantiate(mockEnv, mockInfo, { count: 20 });
     const actual = {
       ok: {
         attributes: [
@@ -50,10 +50,10 @@ describe('CosmWasmVM', () => {
   });
 
   it('execute', async () => {
-    await vm.build(wasm_byte_code);
+    await vm.build(wasmByteCode);
 
-    let region = vm.instantiate(mock_env, mock_info, { count: 20 });
-    region = vm.execute(mock_env, mock_info, { increment: {} });
+    let region = vm.instantiate(mockEnv, mockInfo, { count: 20 });
+    region = vm.execute(mockEnv, mockInfo, { increment: {} });
     const actual = {
       ok: {
         attributes: [{ key: 'method', value: 'try_increment' }],

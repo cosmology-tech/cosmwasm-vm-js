@@ -3,7 +3,7 @@
  *
  * @returns {number} bytes1 < bytes2 --> -1; bytes1 == bytes2 --> 0; bytes1 > bytes2 --> 1
  */
-export default function array_compare(
+export default function arrayCompare(
   bytes1: Uint8Array,
   bytes2: Uint8Array
 ): number {

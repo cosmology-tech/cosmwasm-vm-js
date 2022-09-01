@@ -57,8 +57,8 @@ export class VMInstance {
 
   public allocate(size: number): Region {
     let { allocate, memory } = this.exports;
-    let reg_ptr = allocate(size);
-    return new Region(memory, reg_ptr);
+    let regPtr = allocate(size);
+    return new Region(memory, regPtr);
   }
 
   public deallocate(region: Region): void {
@@ -260,11 +260,11 @@ export class VMInstance {
   }
 
   do_db_scan(start: Region, end: Region, order: number): Region {
-    const iter_id = this.backend.storage.scan(start.data, end.data, order);
-    const iter_id_bytes = numberToBytes(iter_id);
+    const iterId = this.backend.storage.scan(start.data, end.data, order);
+    const iterIdBytes = numberToBytes(iterId);
 
-    let region = this.allocate(iter_id_bytes.length);
-    region.write(iter_id_bytes);
+    let region = this.allocate(iterIdBytes.length);
+    region.write(iterIdBytes);
     return region;
   }
 
@@ -391,22 +391,22 @@ export class VMInstance {
     signatures: Region,
     public_keys: Region
   ): number {
-    const messages_data = JSON.parse(messages.str);
-    const signature_data = JSON.parse(signatures.str);
-    const pubKey_data = JSON.parse(public_keys.str);
+    const messagesData = JSON.parse(messages.str);
+    const signatureData = JSON.parse(signatures.str);
+    const pubKeyData = JSON.parse(public_keys.str);
     if (
-      messages_data.length !== signature_data.length ||
-      messages_data.length !== pubKey_data.length
+      messagesData.length !== signatureData.length ||
+      messagesData.length !== pubKeyData.length
     ) {
       throw new Error(
         'Lengths of messages, signatures and public keys do not match.'
       );
     }
 
-    for (let i = 0; i < messages_data.length; i++) {
-      const msg = Uint8Array.from(Object.values(messages_data[i]));
-      const sig = Uint8Array.from(Object.values(signature_data[i]));
-      const pub = Uint8Array.from(Object.values(pubKey_data[i]));
+    for (let i = 0; i < messagesData.length; i++) {
+      const msg = Uint8Array.from(Object.values(messagesData[i]));
+      const sig = Uint8Array.from(Object.values(signatureData[i]));
+      const pub = Uint8Array.from(Object.values(pubKeyData[i]));
       const _sig = Buffer.from(sig).toString('hex');
       const _pub = Buffer.from(pub).toString('hex');
       const _msg = Buffer.from(msg).toString('hex');
