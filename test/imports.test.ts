@@ -15,7 +15,6 @@ import {
   VMInstance,
 } from '../src';
 import bytesToNumber from '../src/lib/bytes-to-number';
-import numberToBytes from '../src/lib/number-to-bytes';
 
 // In Rust, b"XXX" is the same as creating a bytestring of the ASCII-encoded string "XXX".
 const KEY1 = toAscii('ant');
