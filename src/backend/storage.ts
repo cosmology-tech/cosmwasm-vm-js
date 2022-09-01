@@ -106,7 +106,7 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
   }
 
   scan(start: Uint8Array, end: Uint8Array, order: Order): number {
-    if (order !== Order.Ascending && order !== Order.Descending) {
+    if (!(order in Order)) {
       throw new Error(`Invalid order value ${order}.`);
     }
 
