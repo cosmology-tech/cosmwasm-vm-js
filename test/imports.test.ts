@@ -796,7 +796,7 @@ describe('do_db_scan', () => {
     vm = await createVM();
   });
 
-  it.only('unbound works', () => {
+  it('unbound works', () => {
     const zeroRegion = writeData(vm, numberToBytes(0));
     const id_region = vm.do_db_scan(zeroRegion, zeroRegion, Order.Ascending);
     const id = bytesToNumber(id_region.data);
