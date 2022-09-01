@@ -1,9 +1,11 @@
+import { toHex, fromHex } from '@cosmjs/encoding';
+
 /**
  * Compares two byte arrays using the same logic as strcmp()
  *
  * @returns {number} bytes1 < bytes2 --> -1; bytes1 == bytes2 --> 0; bytes1 > bytes2 --> 1
  */
-export default function arrayCompare(
+ export function compare(
   bytes1: Uint8Array,
   bytes2: Uint8Array
 ): number {
@@ -17,4 +19,18 @@ export default function arrayCompare(
   }
 
   return 0;
+}
+
+
+export function toNumber(byteArray: Uint8Array) {
+  return parseInt(toHex(byteArray));
+}
+
+export function toByteArray(number: number): Uint8Array {
+  let hex = number.toString(16);
+  if (hex.length % 2 === 1) {
+    hex = `0${hex}`;
+  }
+
+  return fromHex(hex);
 }

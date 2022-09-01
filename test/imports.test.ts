@@ -8,7 +8,7 @@ import {
   Order,
   Region
 } from '../src';
-import bytesToNumber from '../src/lib/bytes-to-number';
+import { toNumber } from '../src/helpers/byte-array';
 
 describe('do_db_read', () => {
   let vm: VMInstance;
@@ -853,5 +853,5 @@ function expectEntryToBe(
 
 function fromRegionPtr(vm: VMInstance, regionPtr: number): number {
   const region = vm.region(regionPtr);
-  return bytesToNumber(region.data);
+  return toNumber(region.data);
 }
