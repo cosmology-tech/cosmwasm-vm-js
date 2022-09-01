@@ -802,6 +802,8 @@ describe('do_db_scan', () => {
     const id = bytesToNumber(id_region.data);
     expect(id).toBe(1);
 
+    // ToDo: check keys match
+
     let item = vm.do_db_next(id);
     let json = JSON.parse(fromAscii(item.data));
     let value = new Uint8Array(Object.values(json.value));
@@ -813,7 +815,23 @@ describe('do_db_scan', () => {
     expect(value).toStrictEqual(VALUE2);
   });
 
-  it('unbound descending works', () => {});
+  it('unbound descending works', () => {
+    const zeroRegion = writeData(vm, numberToBytes(0));
+    const id_region = vm.do_db_scan(zeroRegion, zeroRegion, Order.Descending);
+    const id = bytesToNumber(id_region.data);
+    expect(id).toBe(1);
+
+    let item = vm.do_db_next(id);
+    let json = JSON.parse(fromAscii(item.data));
+    let value = new Uint8Array(Object.values(json.value));
+    expect(value).toStrictEqual(VALUE2);
+
+    item = vm.do_db_next(id);
+    json = JSON.parse(fromAscii(item.data));
+    value = new Uint8Array(Object.values(json.value));
+    expect(value).toStrictEqual(VALUE1);
+  });
+
   it('bound works', () => {});
   it('bound descending works', () => {});
   it('multiple iterators', () => {});
