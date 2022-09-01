@@ -826,11 +826,11 @@ describe('db_scan', () => {
   });
 
   it('bound works', () => {
-    const startRegion = writeData(vm, toAscii('anna'));
-    const endRegion = writeData(vm, toAscii('bert'));
+    const start_region_ptr = writeData(vm, toAscii('anna')).ptr;
+    const end_region_ptr = writeData(vm, toAscii('bert')).ptr;
 
-    const id_region = vm.do_db_scan(startRegion, endRegion, Order.Ascending);
-    const id = bytesToNumber(id_region.data);
+    const id_region_ptr = vm.db_scan(start_region_ptr, end_region_ptr, Order.Ascending);
+    const id = fromRegionPtr(vm, id_region_ptr);
     expect(id).toBe(1);
 
     let item = vm.do_db_next(id);
@@ -841,11 +841,11 @@ describe('db_scan', () => {
   });
 
   it('bound descending works', () => {
-    const startRegion = writeData(vm, toAscii('antler'));
-    const endRegion = writeData(vm, toAscii('trespass'));
+    const start_region_ptr = writeData(vm, toAscii('antler')).ptr;
+    const end_region_ptr = writeData(vm, toAscii('trespass')).ptr;
 
-    const id_region = vm.do_db_scan(startRegion, endRegion, Order.Descending);
-    const id = bytesToNumber(id_region.data);
+    const id_region_ptr = vm.db_scan(start_region_ptr, end_region_ptr, Order.Descending);
+    const id = fromRegionPtr(vm, id_region_ptr);
     expect(id).toBe(1);
 
     let item = vm.do_db_next(id);
