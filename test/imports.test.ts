@@ -84,15 +84,6 @@ export const writeObject = (vm: VMInstance, data: [Uint8Array]): Region => {
   return vm.allocate_json(data);
 };
 
-function expectEntryToBe(expected_key: Uint8Array, expected_value: Uint8Array, actual_item: Region) {
-  let json = JSON.parse(fromAscii(actual_item.data));
-  let key = new Uint8Array(Object.values(json.key));
-  let value = new Uint8Array(Object.values(json.value));
-
-  expect(key).toStrictEqual(expected_key);
-  expect(value).toStrictEqual(expected_value);
-}
-
 describe('do_db_read', () => {
   let vm: VMInstance;
   beforeEach(async () => {
@@ -799,18 +790,15 @@ describe('do_query_chain', () => {
   it('fails for missing contract', () => {});
 });
 
-describe('do_db_scan', () => {
+describe('db_scan', () => {
   let vm: VMInstance;
   beforeEach(async () => {
     vm = await createVM();
   });
 
   it('unbound works', () => {
-    const zeroRegion = writeData(vm, numberToBytes(0));
-
-    const id_region_ptr = vm.do_db_scan(zeroRegion, zeroRegion, Order.Ascending);
-    const id_region = vm.region(id_region_ptr);
-    const id = bytesToNumber(id_region.data);
+    const id_region_ptr = vm.db_scan(0, 0, Order.Ascending);
+    const id = fromRegionPtr(vm, id_region_ptr);
     expect(id).toBe(1);
 
     let item = vm.do_db_next(id);
@@ -821,11 +809,8 @@ describe('do_db_scan', () => {
   });
 
   it('unbound descending works', () => {
-    const zeroRegion = writeData(vm, numberToBytes(0));
-
-    const id_region_ptr = vm.do_db_scan(zeroRegion, zeroRegion, Order.Descending);
-    const id_region = vm.region(id_region_ptr);
-    const id = bytesToNumber(id_region.data);
+    const id_region_ptr = vm.db_scan(0, 0, Order.Descending);
+    const id = fromRegionPtr(vm, id_region_ptr);
     expect(id).toBe(1);
 
     let item = vm.do_db_next(id);
@@ -855,3 +840,19 @@ describe('do_db_next', () => {
     }
   });
 });
+
+// test helpers
+
+function expectEntryToBe(expectedKey: Uint8Array, expectedValue: Uint8Array, actualItem: Region) {
+  let json = JSON.parse(fromAscii(actualItem.data));
+  let key = new Uint8Array(Object.values(json.key));
+  let value = new Uint8Array(Object.values(json.value));
+
+  expect(key).toStrictEqual(expectedKey);
+  expect(value).toStrictEqual(expectedValue);
+}
+
+function fromRegionPtr(vm: VMInstance, regionPtr: number): number {
+  const region = vm.region(regionPtr);
+  return bytesToNumber(region.data);
+}
