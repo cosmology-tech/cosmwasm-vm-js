@@ -1,10 +1,12 @@
 /* Constants from https://github.com/cosmwasm/cosmwasm/blob/5e04c3c1aa7e278626196de43aa18e9bedbc6000/packages/vm/src/imports.rs#L499 */
 import { readFileSync } from 'fs';
+import { fromHex, toAscii, fromAscii } from '@cosmjs/encoding';
 import {
   BasicBackendApi,
   BasicQuerier,
   BasicKVIterStorage,
   IBackend,
+  Order,
 } from '../src/backend';
 import {
   MAX_LENGTH_CANONICAL_ADDRESS,
@@ -12,7 +14,8 @@ import {
   Region,
   VMInstance,
 } from '../src';
-import { fromHex, toAscii } from '@cosmjs/encoding';
+import bytesToNumber from '../src/lib/bytes-to-number';
+import numberToBytes from '../src/lib/number-to-bytes';
 
 // In Rust, b"XXX" is the same as creating a bytestring of the ASCII-encoded string "XXX".
 const KEY1 = toAscii('ant');
@@ -788,7 +791,28 @@ describe('do_query_chain', () => {
 });
 
 describe('do_db_scan', () => {
-  it('unbound works', () => {});
+  let vm: VMInstance;
+  beforeEach(async () => {
+    vm = await createVM();
+  });
+
+  it.only('unbound works', () => {
+    const zeroRegion = writeData(vm, numberToBytes(0));
+    const id_region = vm.do_db_scan(zeroRegion, zeroRegion, Order.Ascending);
+    const id = bytesToNumber(id_region.data);
+    expect(id).toBe(1);
+
+    let item = vm.do_db_next(id);
+    let json = JSON.parse(fromAscii(item.data));
+    let value = new Uint8Array(Object.values(json.value));
+    expect(value).toStrictEqual(VALUE1);
+
+    item = vm.do_db_next(id);
+    json = JSON.parse(fromAscii(item.data));
+    value = new Uint8Array(Object.values(json.value));
+    expect(value).toStrictEqual(VALUE2);
+  });
+
   it('unbound descending works', () => {});
   it('bound works', () => {});
   it('bound descending works', () => {});

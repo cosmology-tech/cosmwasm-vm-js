@@ -1,4 +1,5 @@
 import { fromBase64, toBase64 } from '@cosmjs/encoding';
+import array_compare from '../lib/array-compare';
 import { MAX_LENGTH_DB_KEY } from '../instance';
 
 export interface IStorage {
@@ -101,6 +102,27 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
   }
 
   scan(start: Uint8Array | null, end: Uint8Array | null, order: Order): number {
-    throw new Error('Not implemented');
+    const new_id = this.iterators.entries.length + 1;
+
+    // if start > end, this represents an empty range
+    if (start && end && array_compare(start, end) === 1) {
+      this.iterators.set(new_id, { data: [], position: 0 });
+      return new_id;
+    }
+
+    let data: Record[] = [];
+    for (const key of Object.keys(this.dict)) {
+      if (start && array_compare(start, fromBase64(key)) === 1) continue;
+      if (end && array_compare(fromBase64(key), end) < 1) continue;
+
+      data.push({ key: fromBase64(key), value: fromBase64(this.dict[key]!) });
+    }
+
+    if (order === Order.Descending) {
+      data = data.reverse();
+    }
+
+    this.iterators.set(new_id, { data, position: 0 });
+    return new_id;
   }
 }
