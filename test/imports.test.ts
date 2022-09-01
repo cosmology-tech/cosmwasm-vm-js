@@ -828,6 +828,7 @@ describe('db_scan', () => {
   it('bound works', () => {
     const startRegion = writeData(vm, toAscii('anna'));
     const endRegion = writeData(vm, toAscii('bert'));
+
     const id_region = vm.do_db_scan(startRegion, endRegion, Order.Ascending);
     const id = bytesToNumber(id_region.data);
     expect(id).toBe(1);
@@ -839,7 +840,21 @@ describe('db_scan', () => {
     expect(item.ptr).toBe(0);
   });
 
-  it('bound descending works', () => {});
+  it('bound descending works', () => {
+    const startRegion = writeData(vm, toAscii('antler'));
+    const endRegion = writeData(vm, toAscii('trespass'));
+
+    const id_region = vm.do_db_scan(startRegion, endRegion, Order.Descending);
+    const id = bytesToNumber(id_region.data);
+    expect(id).toBe(1);
+
+    let item = vm.do_db_next(id);
+    expectEntryToBe(KEY2, VALUE2, item);
+
+    item = vm.do_db_next(id);
+    expect(item.ptr).toBe(0);
+  });
+
   it('multiple iterators', () => {});
   it('fails for invalid order value', () => {});
 });
