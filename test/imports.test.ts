@@ -15,7 +15,6 @@ import {
   VMInstance,
 } from '../src';
 import bytesToNumber from '../src/lib/bytes-to-number';
-import numberToBytes from '../src/lib/number-to-bytes';
 
 // In Rust, b"XXX" is the same as creating a bytestring of the ASCII-encoded string "XXX".
 const KEY1 = toAscii('ant');
@@ -806,6 +805,9 @@ describe('db_scan', () => {
 
     item = vm.do_db_next(id);
     expectEntryToBe(KEY2, VALUE2, item);
+
+    item = vm.do_db_next(id);
+    expect(item.ptr).toBe(0);
   });
 
   it('unbound descending works', () => {
@@ -818,6 +820,23 @@ describe('db_scan', () => {
 
     item = vm.do_db_next(id);
     expectEntryToBe(KEY1, VALUE1, item);
+
+    item = vm.do_db_next(id);
+    expect(item.ptr).toBe(0);
+  });
+
+  it('bound works', () => {
+    const startRegion = writeData(vm, toAscii('anna'));
+    const endRegion = writeData(vm, toAscii('bert'));
+    const id_region = vm.do_db_scan(startRegion, endRegion, Order.Ascending);
+    const id = bytesToNumber(id_region.data);
+    expect(id).toBe(1);
+
+    let item = vm.do_db_next(id);
+    expectEntryToBe(KEY1, VALUE1, item);
+
+    item = vm.do_db_next(id);
+    expect(item.ptr).toBe(0);
   });
 
   it('bound descending works', () => {});

@@ -97,23 +97,27 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
       throw new Error(`Iterator ${iterator_id} not found.`);
     }
     const record = iter.data[iter.position];
+    if (!record) {
+      return null;
+    }
+
     iter.position += 1;
     return record;
   }
 
-  scan(start: Uint8Array | null, end: Uint8Array | null, order: Order): number {
+  scan(start: Uint8Array, end: Uint8Array, order: Order): number {
     const new_id = this.iterators.entries.length + 1;
 
     // if start > end, this represents an empty range
-    if (start && end && array_compare(start, end) === 1) {
+    if (start.length && end.length && array_compare(start, end) === 1) {
       this.iterators.set(new_id, { data: [], position: 0 });
       return new_id;
     }
 
     let data: Record[] = [];
     for (const key of Object.keys(this.dict)) {
-      if (start && array_compare(start, fromBase64(key)) === 1) continue;
-      if (end && array_compare(fromBase64(key), end) < 1) continue;
+      if (start.length && array_compare(start, fromBase64(key)) === 1) continue;
+      if (end.length && array_compare(fromBase64(key), end) > -1) break;
 
       data.push({ key: fromBase64(key), value: fromBase64(this.dict[key]!) });
     }
