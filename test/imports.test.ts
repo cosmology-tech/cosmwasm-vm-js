@@ -725,83 +725,83 @@ describe('db_scan', () => {
   });
 
   it('unbound works', () => {
-    const idRegionPtr = vm.db_scan(0, 0, Order.Ascending);
-    const id = fromRegionPtr(vm, idRegionPtr);
+    const idRegion = vm.do_db_scan(vm.allocate(0), vm.allocate(0), Order.Ascending);
+    const id = toNumber(idRegion.data);
     expect(id).toBe(1);
 
     let item = vm.do_db_next(id);
-    expectEntryToBe(testData.KEY1, testData.VALUE1, item);
+    expectToBeKvp(item, testData.KEY1, testData.VALUE1);
 
     item = vm.do_db_next(id);
-    expectEntryToBe(testData.KEY2, testData.VALUE2, item);
+    expectToBeKvp(item, testData.KEY2, testData.VALUE2);
 
     item = vm.do_db_next(id);
     expect(item.ptr).toBe(0);
   });
 
   it('unbound descending works', () => {
-    const idRegionPtr = vm.db_scan(0, 0, Order.Descending);
-    const id = fromRegionPtr(vm, idRegionPtr);
+    const idRegion = vm.do_db_scan(vm.allocate(0), vm.allocate(0), Order.Descending);
+    const id = toNumber(idRegion.data);
     expect(id).toBe(1);
 
     let item = vm.do_db_next(id);
-    expectEntryToBe(testData.KEY2, testData.VALUE2, item);
+    expectToBeKvp(item, testData.KEY2, testData.VALUE2);
 
     item = vm.do_db_next(id);
-    expectEntryToBe(testData.KEY1, testData.VALUE1, item);
+    expectToBeKvp(item, testData.KEY1, testData.VALUE1);
 
     item = vm.do_db_next(id);
     expect(item.ptr).toBe(0);
   });
 
   it('bound works', () => {
-    const startRegionPtr = writeData(vm, toAscii('anna')).ptr;
-    const endRegionPtr = writeData(vm, toAscii('bert')).ptr;
-
-    const idRegionPtr = vm.db_scan(startRegionPtr, endRegionPtr, Order.Ascending);
-    const id = fromRegionPtr(vm, idRegionPtr);
+    const idRegion = vm.do_db_scan(
+      writeData(vm, toAscii('anna')),
+      writeData(vm, toAscii('bert')),
+      Order.Ascending);
+    const id = toNumber(idRegion.data);
     expect(id).toBe(1);
 
     let item = vm.do_db_next(id);
-    expectEntryToBe(testData.KEY1, testData.VALUE1, item);
+    expectToBeKvp(item, testData.KEY1, testData.VALUE1);
 
     item = vm.do_db_next(id);
     expect(item.ptr).toBe(0);
   });
 
   it('bound descending works', () => {
-    const startRegionPtr = writeData(vm, toAscii('antler')).ptr;
-    const endRegionPtr = writeData(vm, toAscii('trespass')).ptr;
-
-    const idRegionPtr = vm.db_scan(startRegionPtr, endRegionPtr, Order.Descending);
-    const id = fromRegionPtr(vm, idRegionPtr);
+    const idRegion = vm.do_db_scan(
+      writeData(vm, toAscii('antler')),
+      writeData(vm, toAscii('trespass')),
+      Order.Descending);
+    const id = toNumber(idRegion.data);
     expect(id).toBe(1);
 
     let item = vm.do_db_next(id);
-    expectEntryToBe(testData.KEY2, testData.VALUE2, item);
+    expectToBeKvp(item, testData.KEY2, testData.VALUE2);
 
     item = vm.do_db_next(id);
     expect(item.ptr).toBe(0);
   });
 
   it('multiple iterators', () => {
-    const idRegionPtr1 = vm.db_scan(0, 0, Order.Ascending);
-    const id1 = fromRegionPtr(vm, idRegionPtr1);
+    const idRegion1 = vm.do_db_scan(vm.allocate(0), vm.allocate(0), Order.Ascending);
+    const id1 = toNumber(idRegion1.data);
     expect(id1).toBe(1);
 
-    const idRegionPtr2 = vm.db_scan(0, 0, Order.Descending);
-    const id2 = fromRegionPtr(vm, idRegionPtr2);
+    const idRegion2 = vm.do_db_scan(vm.allocate(0), vm.allocate(0), Order.Descending);
+    const id2 = toNumber(idRegion2.data);
     expect(id2).toBe(2);
 
-    expectEntryToBe(testData.KEY1, testData.VALUE1, vm.do_db_next(id1)); // first item, first iterator
-    expectEntryToBe(testData.KEY2, testData.VALUE2, vm.do_db_next(id1)); // second item, first iterator
-    expectEntryToBe(testData.KEY2, testData.VALUE2, vm.do_db_next(id2)); // first item, second iterator
-    expect(vm.do_db_next(id1).ptr).toBe(0);                              // end, first iterator
-    expectEntryToBe(testData.KEY1, testData.VALUE1, vm.do_db_next(id2)); // second item, second iterator
+    expectToBeKvp(vm.do_db_next(id1), testData.KEY1, testData.VALUE1); // first item, first iterator
+    expectToBeKvp(vm.do_db_next(id1), testData.KEY2, testData.VALUE2); // second item, first iterator
+    expectToBeKvp(vm.do_db_next(id2), testData.KEY2, testData.VALUE2); // first item, second iterator
+    expect(vm.do_db_next(id1).ptr).toBe(0);                            // end, first iterator
+    expectToBeKvp(vm.do_db_next(id2), testData.KEY1, testData.VALUE1); // second item, second iterator
   });
 
   it('fails for invalid order value', () => {
-    expect(() => vm.db_scan(0, 0, 42)).toThrow();
+    expect(() => vm.do_db_scan(vm.allocate(0), vm.allocate(0), 42)).toThrowError('Invalid order value 42');
   });
 });
 
@@ -815,8 +815,8 @@ describe('do_db_next', () => {
     const idRegion = vm.do_db_scan(vm.allocate(0), vm.allocate(0), Order.Ascending);
     const id = toNumber(idRegion.data);
 
-    expectEntryToBe(testData.KEY1, testData.VALUE1, vm.do_db_next(id));
-    expectEntryToBe(testData.KEY2, testData.VALUE2, vm.do_db_next(id));
+    expectToBeKvp(vm.do_db_next(id), testData.KEY1, testData.VALUE1);
+    expectToBeKvp(vm.do_db_next(id), testData.KEY2, testData.VALUE2);
     expect(vm.do_db_next(id).ptr).toBe(0);
   });
 
@@ -833,10 +833,10 @@ describe('do_db_next', () => {
 // test helpers //
 //////////////////
 
-function expectEntryToBe(
+function expectToBeKvp(
+  actualItem: Region,
   expectedKey: Uint8Array,
-  expectedValue: Uint8Array,
-  actualItem: Region
+  expectedValue: Uint8Array
 ) {
   const json = JSON.parse(fromAscii(actualItem.data));
   const key = new Uint8Array(Object.values(json.key));
@@ -844,9 +844,4 @@ function expectEntryToBe(
 
   expect(key).toStrictEqual(expectedKey);
   expect(value).toStrictEqual(expectedValue);
-}
-
-function fromRegionPtr(vm: VMInstance, regionPtr: number): number {
-  const region = vm.region(regionPtr);
-  return toNumber(region.data);
 }
