@@ -1,4 +1,4 @@
-import { IBackendApi, IIterStorage, IQuerier, IStorage } from 'backend';
+import { IBackendApi, IIterStorage, IQuerier, IStorage } from './backend';
 
 export interface IEnvironment {
   call_function(name: string, args: object[]): object;
