@@ -451,7 +451,7 @@ describe('do_secp256k1_verify', () => {
   it('fails for short signature', () => {
     try {
       const hashPtr = writeData(vm, testData.ECDSA_HASH_HEX);
-      const sigPtr = writeData(vm, new Uint8Array(0));
+      const sigPtr = vm.allocate(0);
       const pubkeyPtr = writeData(vm, testData.ECDSA_PUBKEY_HEX);
       vm.do_secp256k1_verify(hashPtr, sigPtr, pubkeyPtr);
     } catch (e) {
@@ -645,7 +645,7 @@ describe('do_ed25519_verify', () => {
     try {
       const hashPtr = writeData(vm, testData.EDDSA_MSG_HEX);
       const sigPtr = writeData(vm, testData.EDDSA_SIG_HEX);
-      const pubkeyPtr = writeData(vm, new Uint8Array());
+      const pubkeyPtr = vm.allocate(0);
       vm.do_ed25519_verify(hashPtr, sigPtr, pubkeyPtr);
     } catch (e) {
       expect(e).toEqual(new Error('Assertion failed'));
@@ -805,24 +805,19 @@ describe('db_scan', () => {
   });
 });
 
-describe('db_next', () => {
+describe('do_db_next', () => {
   let vm: VMInstance;
   beforeEach(async () => {
     vm = await createVM();
   });
 
   it('works', () => {
-    const idRegionPtr = vm.db_scan(0, 0, Order.Ascending);
-    const id = fromRegionPtr(vm, idRegionPtr);
+    const idRegion = vm.do_db_scan(vm.allocate(0), vm.allocate(0), Order.Ascending);
+    const id = toNumber(idRegion.data);
 
-    let kvRegionPtr = vm.db_next(id);
-    expectEntryToBe(testData.KEY1, testData.VALUE1, vm.region(kvRegionPtr));
-
-    kvRegionPtr = vm.db_next(id);
-    expectEntryToBe(testData.KEY2, testData.VALUE2, vm.region(kvRegionPtr));
-
-    kvRegionPtr = vm.db_next(id);
-    expect(kvRegionPtr).toBe(0);
+    expectEntryToBe(testData.KEY1, testData.VALUE1, vm.do_db_next(id));
+    expectEntryToBe(testData.KEY2, testData.VALUE2, vm.do_db_next(id));
+    expect(vm.do_db_next(id).ptr).toBe(0);
   });
 
   it('fails for non existent id', () => {

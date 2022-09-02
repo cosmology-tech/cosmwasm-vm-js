@@ -19,7 +19,6 @@ export const createVM = async (): Promise<VMInstance> => {
 };
 
 export const writeData = (vm: VMInstance, data: Uint8Array): Region => {
-  // vm.backend.storage.set(data, VALUE1);
   return vm.allocate_bytes(data);
 };
 
