@@ -7,6 +7,7 @@ import {
   IBackend,
 } from '../src/backend';
 import { fromAscii, fromBase64 } from '@cosmjs/encoding';
+import { Region } from '../src/memory';
 
 const wasm_byte_code = readFileSync('testdata/hackatom.wasm');
 const backend: IBackend = {
@@ -66,10 +67,9 @@ describe('integration', () => {
 
     // Act
     const response = vm.query(mock_env, { verifier: {} });
-    const data = response.json['ok'];
+    const verifier = parseResponse(response);
 
     // Assert
-    const verifier = JSON.parse(fromAscii(fromBase64(data)));
     expect(verifier).toEqual({ verifier: 'terra1kzsrgcktshvqe9p089lqlkadscqwkezy79t8y9' });
   });
 
@@ -88,3 +88,10 @@ describe('integration', () => {
   it('execute_user_errors_in_api_calls', async () => {});
   it('passes_io_tests', async () => {});
 });
+
+// Helpers
+
+function parseResponse(region: Region): any {
+  const data = (region.json as { ok: string }).ok;
+  return JSON.parse(fromAscii(fromBase64(data)));
+}
