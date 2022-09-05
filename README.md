@@ -30,9 +30,10 @@ yarn add cosmwasm-vm-js
 
 ```ts
 import { readFileSync } from 'fs';
-import { BasicKVIterStorage, VMInstance } from 'cosmwasm-vm-js';
+import { VMInstance } from 'cosmwasm-vm-js';
 import {
   BasicBackendApi,
+  BasicKVIterStorage,
   BasicQuerier,
   IBackend,
 } from 'cosmwasm-vm-js/backend';
