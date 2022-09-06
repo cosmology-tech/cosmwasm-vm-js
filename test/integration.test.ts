@@ -16,28 +16,30 @@ const backend: IBackend = {
   querier: new BasicQuerier(),
 };
 
-const vm = new VMInstance(backend);
+const verifier = 'terra1kzsrgcktshvqe9p089lqlkadscqwkezy79t8y9';
+const beneficiary = 'terra1zdpgj8am5nqqvht927k3etljyl6a52kwqup0je';
+const address = 'terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76';
+const sender = 'terra1337xewwfv3jdjuz8e0nea9vd8dpugc0k2dcyt3';
+
 const mockEnv = {
   block: {
     height: 1337,
     time: '2000000000',
     chain_id: 'columbus-5',
   },
-  contract: {
-    address: 'terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76',
-  },
+  contract: { address }
 };
 
-const mockInfo = {
-  sender: 'terra1337xewwfv3jdjuz8e0nea9vd8dpugc0k2dcyt3',
-  funds: [],
-};
+const mockInfo = { sender, funds: [] as { amount: number, denom: string }[] };
 
+let vm: VMInstance;
 describe('integration', () => {
-  it('proper_initialization', async () => {
-    // Arrange
+  beforeEach(async () => {
+    vm = new VMInstance(backend);
     await vm.build(wasmBytecode);
+  });
 
+  it('proper_initialization', async () => {
     // Act
     const instantiateResponse = vm.instantiate(mockEnv, mockInfo, {
       verifier: 'terra1kzsrgcktshvqe9p089lqlkadscqwkezy79t8y9',
@@ -60,7 +62,7 @@ describe('integration', () => {
 
   it('instantiate_and_query', async () => {
     // Arrange
-    await instantiate();
+    vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
 
     // Act
     const queryResponse = vm.query(mockEnv, { verifier: {} });
@@ -72,7 +74,7 @@ describe('integration', () => {
 
   it('migrate_verifier', async () => {
     // Arrange
-    await instantiate();
+    vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
 
     // Act
     let response = vm.migrate(mockEnv, { verifier: 'terra1h8ljdmae7lx05kjj79c9ekscwsyjd3yr8wyvdn' });
@@ -87,9 +89,7 @@ describe('integration', () => {
     throw new Error('Not implemented');
   });
 
-  it('querier_callbacks_work', async () => {
-
-  });
+  it('querier_callbacks_work', async () => {});
 
   it('fails_on_bad_init', async () => {});
 
@@ -124,14 +124,6 @@ function expectResponseToBeOk(region: Region) {
   } catch (_) {
     throw new Error(`Expected response to be ok; instead got: ${JSON.stringify(region.json)}`);
   }
-}
-
-async function instantiate() {
-  await vm.build(wasmBytecode);
-  vm.instantiate(mockEnv, mockInfo, {
-    verifier: 'terra1kzsrgcktshvqe9p089lqlkadscqwkezy79t8y9',
-    beneficiary: 'terra1zdpgj8am5nqqvht927k3etljyl6a52kwqup0je'
-  });
 }
 
 function expectVerifierToBe(addr: string) {
