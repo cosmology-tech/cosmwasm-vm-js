@@ -110,9 +110,9 @@ export class VMInstance {
     return this.region(result);
   }
 
-  public migrate(env: object, info: object, msg: object): Region {
+  public migrate(env: object, msg: object): Region {
     let { migrate } = this.exports;
-    let args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = migrate(...args);
     return this.region(result);
   }
