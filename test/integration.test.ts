@@ -9,7 +9,7 @@ import {
 import { fromAscii, fromBase64 } from '@cosmjs/encoding';
 import { Region } from '../src/memory';
 
-const wasm_byte_code = readFileSync('testdata/hackatom.wasm');
+const wasmBytecode = readFileSync('testdata/hackatom.wasm');
 const backend: IBackend = {
   backend_api: new BasicBackendApi('terra'),
   storage: new BasicKVIterStorage(),
@@ -17,7 +17,7 @@ const backend: IBackend = {
 };
 
 const vm = new VMInstance(backend);
-const mock_env = {
+const mockEnv = {
   block: {
     height: 1337,
     time: '2000000000',
@@ -28,7 +28,7 @@ const mock_env = {
   },
 };
 
-const mock_info = {
+const mockInfo = {
   sender: 'terra1337xewwfv3jdjuz8e0nea9vd8dpugc0k2dcyt3',
   funds: [],
 };
@@ -36,10 +36,10 @@ const mock_info = {
 describe('integration', () => {
   it('proper_initialization', async () => {
     // Arrange
-    await vm.build(wasm_byte_code);
+    await vm.build(wasmBytecode);
 
     // Act
-    const instantiateResponse = vm.instantiate(mock_env, mock_info, {
+    const instantiateResponse = vm.instantiate(mockEnv, mockInfo, {
       verifier: 'terra1kzsrgcktshvqe9p089lqlkadscqwkezy79t8y9',
       beneficiary: 'terra1zdpgj8am5nqqvht927k3etljyl6a52kwqup0je'
     });
@@ -63,7 +63,7 @@ describe('integration', () => {
     await instantiate();
 
     // Act
-    const queryResponse = vm.query(mock_env, { verifier: {} });
+    const queryResponse = vm.query(mockEnv, { verifier: {} });
 
     // Assert
     expectResponseToBeOk(queryResponse);
@@ -75,7 +75,7 @@ describe('integration', () => {
     await instantiate();
 
     // Act
-    let response = vm.migrate(mock_env, { verifier: 'terra1h8ljdmae7lx05kjj79c9ekscwsyjd3yr8wyvdn' });
+    let response = vm.migrate(mockEnv, { verifier: 'terra1h8ljdmae7lx05kjj79c9ekscwsyjd3yr8wyvdn' });
 
     // Assert
     expectResponseToBeOk(response);
@@ -87,7 +87,9 @@ describe('integration', () => {
     throw new Error('Not implemented');
   });
 
-  it('querier_callbacks_work', async () => {});
+  it('querier_callbacks_work', async () => {
+
+  });
 
   it('fails_on_bad_init', async () => {});
 
@@ -125,15 +127,15 @@ function expectResponseToBeOk(region: Region) {
 }
 
 async function instantiate() {
-  await vm.build(wasm_byte_code);
-  vm.instantiate(mock_env, mock_info, {
+  await vm.build(wasmBytecode);
+  vm.instantiate(mockEnv, mockInfo, {
     verifier: 'terra1kzsrgcktshvqe9p089lqlkadscqwkezy79t8y9',
     beneficiary: 'terra1zdpgj8am5nqqvht927k3etljyl6a52kwqup0je'
   });
 }
 
 function expectVerifierToBe(addr: string) {
-  const queryResponse = vm.query(mock_env, { verifier: {} });
+  const queryResponse = vm.query(mockEnv, { verifier: {} });
   const verifier = parseBase64Response(queryResponse);
   expect(verifier).toEqual({ verifier: addr });
 }
