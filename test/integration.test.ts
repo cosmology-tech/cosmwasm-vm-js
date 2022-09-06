@@ -87,7 +87,9 @@ describe('integration', () => {
     throw new Error('Not implemented');
   });
 
-  it('querier_callbacks_work', async () => {});
+  it.skip('querier_callbacks_work', async () => {
+    throw new Error('Not implemented');
+  });
 
   it('fails_on_bad_init', async () => {});
 
