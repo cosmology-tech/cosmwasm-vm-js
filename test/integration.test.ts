@@ -18,8 +18,7 @@ const backend: IBackend = {
 
 const verifier = 'terra1kzsrgcktshvqe9p089lqlkadscqwkezy79t8y9';
 const beneficiary = 'terra1zdpgj8am5nqqvht927k3etljyl6a52kwqup0je';
-const address = 'terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76';
-const sender = 'terra1337xewwfv3jdjuz8e0nea9vd8dpugc0k2dcyt3';
+const creator = 'terra1337xewwfv3jdjuz8e0nea9vd8dpugc0k2dcyt3';
 
 const mockEnv = {
   block: {
@@ -27,10 +26,13 @@ const mockEnv = {
     time: '2000000000',
     chain_id: 'columbus-5',
   },
-  contract: { address }
+  contract: { address: 'terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76' }
 };
 
-const mockInfo = { sender, funds: [] as { amount: number, denom: string }[] };
+const mockInfo: { sender: string, funds: { amount: string, denom: string }[] } = {
+  sender: creator,
+  funds: []
+};
 
 let vm: VMInstance;
 describe('integration', () => {
@@ -87,22 +89,49 @@ describe('integration', () => {
     throw new Error('Not implemented');
   });
 
-  it.skip('querier_callbacks_work', async () => {
-    throw new Error('Not implemented');
+  it.skip('querier_callbacks_work', async () => { // query_chain not implemented
+    // Arrange
+    vm.instantiate(
+      mockEnv,
+      { sender: creator, funds: [{ amount: '10000', denom: 'gold' }] },
+      { verifier, beneficiary });
+
+    // Act
+    const queryResponse = vm.query(mockEnv, { other_balance: { address: creator } });
+
+    // Assert
+    expectResponseToBeOk(queryResponse);
+    // ToDo: more asserts
   });
 
   it('fails_on_bad_init', async () => {
     // Act
     const response = vm.instantiate(
       mockEnv,
-      { creator: { amount: 1000, denom: 'earth' } }, // invalid info message
+      { funds: [{ amount: '1000', denom: 'earth' }] }, // invalid info message, missing sender field
       { verifier, beneficiary });
 
     // Assert
     expect((response.json as { error: string }).error.indexOf('Error parsing')).toBe(0);
   });
 
-  it('execute_release_works', async () => {});
+  it.skip('execute_release_works', async () => { // query_chain not implemented
+    // Arrange
+    vm.instantiate(
+      mockEnv,
+      { sender: creator, funds: [{ amount: '1000', denom: 'earth' }] },
+      { verifier, beneficiary });
+
+    // Act
+    const execResponse = vm.execute(
+      mockEnv,
+      { sender: verifier, funds: [] },
+      { release: {}});
+
+    // Assert
+    expectResponseToBeOk(execResponse);
+    // ToDo: more asserts
+  });
 
   it('execute_release_fails_for_wrong_sender', async () => {});
 
