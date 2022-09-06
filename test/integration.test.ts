@@ -91,7 +91,16 @@ describe('integration', () => {
     throw new Error('Not implemented');
   });
 
-  it('fails_on_bad_init', async () => {});
+  it('fails_on_bad_init', async () => {
+    // Act
+    const response = vm.instantiate(
+      mockEnv,
+      { creator: { amount: 1000, denom: 'earth' } }, // invalid info message
+      { verifier, beneficiary });
+
+    // Assert
+    expect((response.json as { error: string }).error.indexOf('Error parsing')).toBe(0);
+  });
 
   it('execute_release_works', async () => {});
 
