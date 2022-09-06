@@ -41,10 +41,7 @@ describe('integration', () => {
 
   it('proper_initialization', async () => {
     // Act
-    const instantiateResponse = vm.instantiate(mockEnv, mockInfo, {
-      verifier: 'terra1kzsrgcktshvqe9p089lqlkadscqwkezy79t8y9',
-      beneficiary: 'terra1zdpgj8am5nqqvht927k3etljyl6a52kwqup0je'
-    });
+    const instantiateResponse = vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
 
     // Assert
     expect(instantiateResponse.json).toEqual({
@@ -57,7 +54,7 @@ describe('integration', () => {
         messages: [],
       },
     });
-    expectVerifierToBe('terra1kzsrgcktshvqe9p089lqlkadscqwkezy79t8y9');
+    expectVerifierToBe(verifier);
   });
 
   it('instantiate_and_query', async () => {
@@ -69,7 +66,7 @@ describe('integration', () => {
 
     // Assert
     expectResponseToBeOk(queryResponse);
-    expect(parseBase64Response(queryResponse)).toEqual({ verifier: 'terra1kzsrgcktshvqe9p089lqlkadscqwkezy79t8y9' });
+    expect(parseBase64Response(queryResponse)).toEqual({ verifier });
   });
 
   it('migrate_verifier', async () => {
@@ -77,12 +74,13 @@ describe('integration', () => {
     vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
 
     // Act
-    let response = vm.migrate(mockEnv, { verifier: 'terra1h8ljdmae7lx05kjj79c9ekscwsyjd3yr8wyvdn' });
+    const newVerifier = 'terra1h8ljdmae7lx05kjj79c9ekscwsyjd3yr8wyvdn'
+    let response = vm.migrate(mockEnv, { verifier: newVerifier });
 
     // Assert
     expectResponseToBeOk(response);
     expect((response.json as { ok: { messages: any[] }}).ok.messages.length).toBe(0);
-    expectVerifierToBe('terra1h8ljdmae7lx05kjj79c9ekscwsyjd3yr8wyvdn');
+    expectVerifierToBe(newVerifier);
   });
 
   it.skip('sudo_can_steal_tokens', async () => {
