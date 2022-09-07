@@ -85,9 +85,7 @@ describe('integration', () => {
     expectVerifierToBe(newVerifier);
   });
 
-  it.skip('sudo_can_steal_tokens', async () => {
-    throw new Error('Not implemented');
-  });
+  it.skip('sudo_can_steal_tokens', async () => {}); // sudo not implemented
 
   it.skip('querier_callbacks_work', async () => { // query_chain not implemented
     // Arrange
@@ -133,25 +131,72 @@ describe('integration', () => {
     // ToDo: more asserts
   });
 
-  it('execute_release_fails_for_wrong_sender', async () => {});
+  it.skip('execute_release_fails_for_wrong_sender', async () => {}); // query_chain not implemented
 
-  it('execute_argon2', async () => {});
-
-  it('execute_cpu_loop', async () => {});
-
-  it('execute_storage_loop', async () => {});
-
-  it('execute_memory_loop', async () => {});
-
-  it('execute_allocate_large_memory', async () => {});
-
-  it('execute_panic', async () => {});
-
-  it('execute_user_errors_in_api_calls', async () => {});
-
-  it.skip('passes_io_tests', async () => {
-    throw new Error('Not implemented');
+  it('execute_argon2', async () => {
+    // ToDo: do we need this? If so, need to import cyberpunk.wasm
   });
+
+  it.skip('execute_cpu_loop', async () => { // seems to hang the test harness
+    // Arrange
+    vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
+
+    // Act
+    const execResponse = vm.execute(mockEnv, mockInfo, { cpu_loop: {}});
+  });
+
+  it.skip('execute_storage_loop', async () => { // seems to hang the test harness
+    // Arrange
+    vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
+
+    // Act
+    const execResponse = vm.execute(mockEnv, mockInfo, { storage_loop: {}});
+  });
+
+  it.skip('execute_memory_loop', async () => {
+    // Arrange
+    vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
+
+    // Act
+    const execResponse = vm.execute(mockEnv, mockInfo, { memory_loop: {}});
+  });
+
+  it.only('execute_allocate_large_memory', async () => {
+    // Arrange
+    const instResponse = vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
+    expectResponseToBeOk(instResponse);
+    expect((instResponse.json as { ok: { messages: any[] }}).ok.messages.length).toBe(0);
+    expect(instResponse.memory.buffer.byteLength).toBe(1179648);
+
+    // Act 1
+    let gasBefore = null; // ToDo: how do we do this?
+    let execResponse = vm.execute(mockEnv, mockInfo, { allocate_large_memory: { pages: 48 }});
+    expect(execResponse.memory.buffer.byteLength).toBe(4325376);
+
+    // Act 2
+    execResponse = vm.execute(mockEnv, mockInfo, { allocate_large_memory: { pages: 1600 }});
+    console.log(execResponse.json)
+    expect(execResponse.memory.buffer.byteLength).toBe(109182976);
+    expect(execResponse.json.error).toBe('Generic error: memory.grow failed')
+  });
+
+  it('execute_panic', async () => {
+    // Arrange
+    vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
+
+    // Act
+    const execResponse = vm.execute(mockEnv, mockInfo, { panic: {} });
+  });
+
+  it('execute_user_errors_in_api_calls', async () => {
+     // Arrange
+     vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
+
+     // Act
+     const execResponse = vm.execute(mockEnv, mockInfo, { user_errors_in_api_calls: {} });
+  });
+
+  it.skip('passes_io_tests', async () => {}); // io not implemented/relevant
 });
 
 // Helpers
