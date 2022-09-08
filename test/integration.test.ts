@@ -148,11 +148,6 @@ describe('integration', () => {
     // Act
     expect(() => vm.execute(mockEnv, mockInfo, { user_errors_in_api_calls: {} })).toThrow();
   });
-
-  it.skip('passes_io_tests', async () => {
-    // Reference implementation: https://github.com/CosmWasm/cosmwasm/blob/a9ae6fa76ba6c05de1792f887a09401856f14bc1/packages/vm/src/testing/instance.rs#L171
-    // pub fn test_io<A, S, Q>(instance: &mut Instance<A, S, Q>)
-  });
 });
 
 // Helpers
