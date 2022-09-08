@@ -85,9 +85,7 @@ describe('integration', () => {
     expectVerifierToBe(newVerifier);
   });
 
-  it.skip('sudo_can_steal_tokens', async () => {
-    throw new Error('Not implemented');
-  });
+  it.skip('sudo_can_steal_tokens', async () => {}); // sudo not implemented
 
   it.skip('querier_callbacks_work', async () => { // query_chain not implemented
     // Arrange
@@ -101,7 +99,7 @@ describe('integration', () => {
 
     // Assert
     expectResponseToBeOk(queryResponse);
-    // ToDo: more asserts
+    // ToDo: moar assert
   });
 
   it('fails_on_bad_init', async () => {
@@ -130,27 +128,30 @@ describe('integration', () => {
 
     // Assert
     expectResponseToBeOk(execResponse);
-    // ToDo: more asserts
+    // ToDo: moar assert
   });
 
-  it('execute_release_fails_for_wrong_sender', async () => {});
+  it.skip('execute_release_fails_for_wrong_sender', async () => {}); // query_chain not implemented
 
-  it('execute_argon2', async () => {});
+  it('execute_panic', async () => {
+    // Arrange
+    vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
 
-  it('execute_cpu_loop', async () => {});
+    // Act
+    expect(() => vm.execute(mockEnv, mockInfo, { panic: {} })).toThrow();
+  });
 
-  it('execute_storage_loop', async () => {});
+  it('execute_user_errors_in_api_calls', async () => {
+    // Arrange
+    vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
 
-  it('execute_memory_loop', async () => {});
-
-  it('execute_allocate_large_memory', async () => {});
-
-  it('execute_panic', async () => {});
-
-  it('execute_user_errors_in_api_calls', async () => {});
+    // Act
+    expect(() => vm.execute(mockEnv, mockInfo, { user_errors_in_api_calls: {} })).toThrow();
+  });
 
   it.skip('passes_io_tests', async () => {
-    throw new Error('Not implemented');
+    // Reference implementation: https://github.com/CosmWasm/cosmwasm/blob/a9ae6fa76ba6c05de1792f887a09401856f14bc1/packages/vm/src/testing/instance.rs#L171
+    // pub fn test_io<A, S, Q>(instance: &mut Instance<A, S, Q>)
   });
 });
 
