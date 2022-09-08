@@ -99,7 +99,7 @@ describe('integration', () => {
 
     // Assert
     expectResponseToBeOk(queryResponse);
-    // ToDo: more asserts
+    // ToDo: moar assert
   });
 
   it('fails_on_bad_init', async () => {
@@ -128,75 +128,31 @@ describe('integration', () => {
 
     // Assert
     expectResponseToBeOk(execResponse);
-    // ToDo: more asserts
+    // ToDo: moar assert
   });
 
   it.skip('execute_release_fails_for_wrong_sender', async () => {}); // query_chain not implemented
-
-  it('execute_argon2', async () => {
-    // ToDo: do we need this? If so, need to import cyberpunk.wasm
-  });
-
-  it.skip('execute_cpu_loop', async () => { // seems to hang the test harness
-    // Arrange
-    vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
-
-    // Act
-    const execResponse = vm.execute(mockEnv, mockInfo, { cpu_loop: {}});
-  });
-
-  it.skip('execute_storage_loop', async () => { // seems to hang the test harness
-    // Arrange
-    vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
-
-    // Act
-    const execResponse = vm.execute(mockEnv, mockInfo, { storage_loop: {}});
-  });
-
-  it.skip('execute_memory_loop', async () => {
-    // Arrange
-    vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
-
-    // Act
-    const execResponse = vm.execute(mockEnv, mockInfo, { memory_loop: {}});
-  });
-
-  it.only('execute_allocate_large_memory', async () => {
-    // Arrange
-    const instResponse = vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
-    expectResponseToBeOk(instResponse);
-    expect((instResponse.json as { ok: { messages: any[] }}).ok.messages.length).toBe(0);
-    expect(instResponse.memory.buffer.byteLength).toBe(1179648);
-
-    // Act 1
-    let gasBefore = null; // ToDo: how do we do this?
-    let execResponse = vm.execute(mockEnv, mockInfo, { allocate_large_memory: { pages: 48 }});
-    expect(execResponse.memory.buffer.byteLength).toBe(4325376);
-
-    // Act 2
-    execResponse = vm.execute(mockEnv, mockInfo, { allocate_large_memory: { pages: 1600 }});
-    console.log(execResponse.json)
-    expect(execResponse.memory.buffer.byteLength).toBe(109182976);
-    expect(execResponse.json.error).toBe('Generic error: memory.grow failed')
-  });
 
   it('execute_panic', async () => {
     // Arrange
     vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
 
     // Act
-    const execResponse = vm.execute(mockEnv, mockInfo, { panic: {} });
+    expect(() => vm.execute(mockEnv, mockInfo, { panic: {} })).toThrow();
   });
 
   it('execute_user_errors_in_api_calls', async () => {
-     // Arrange
-     vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
+    // Arrange
+    vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
 
-     // Act
-     const execResponse = vm.execute(mockEnv, mockInfo, { user_errors_in_api_calls: {} });
+    // Act
+    expect(() => vm.execute(mockEnv, mockInfo, { user_errors_in_api_calls: {} })).toThrow();
   });
 
-  it.skip('passes_io_tests', async () => {}); // io not implemented/relevant
+  it.skip('passes_io_tests', async () => {
+    // Reference implementation: https://github.com/CosmWasm/cosmwasm/blob/a9ae6fa76ba6c05de1792f887a09401856f14bc1/packages/vm/src/testing/instance.rs#L171
+    // pub fn test_io<A, S, Q>(instance: &mut Instance<A, S, Q>)
+  });
 });
 
 // Helpers
