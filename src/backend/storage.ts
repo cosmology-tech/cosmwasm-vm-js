@@ -1,6 +1,6 @@
-import { fromBase64, toBase64 } from '@cosmjs/encoding';
 import { compare } from '../helpers/byte-array';
 import { MAX_LENGTH_DB_KEY } from '../instance';
+import Immutable from 'immutable';
 
 export interface IStorage {
   get(key: Uint8Array): Uint8Array | null;
@@ -38,23 +38,24 @@ export interface IIterStorage {
   next(iterator_id: number /* Uint32 */): Record | null;
 }
 
+type KVDict = Immutable.Map<Uint8Array, Uint8Array>;
+
 export class BasicKVStorage implements IStorage {
   // TODO: Add binary uint / typed Addr maps for cw-storage-plus compatibility
-  constructor(public dict: { [key: string]: string | undefined } = {}) {}
+
+  constructor(public dict: KVDict = Immutable.Map()) {}
 
   get(key: Uint8Array): Uint8Array | null {
-    const keyStr = toBase64(key);
-    const value = this.dict[keyStr];
+    const value = this.dict.get(key);
     if (value === undefined) {
       return null;
     }
 
-    return fromBase64(value);
+    return value;
   }
 
   set(key: Uint8Array, value: Uint8Array): void {
-    const keyStr = toBase64(key);
-    this.dict[keyStr] = toBase64(value);
+    this.dict.set(key, value);
   }
 
   remove(key: Uint8Array): void {
@@ -63,7 +64,7 @@ export class BasicKVStorage implements IStorage {
         `Key length ${key.length} exceeds maximum length ${MAX_LENGTH_DB_KEY}.`
       );
     }
-    this.dict[toBase64(key)] = undefined;
+    this.dict.remove(key);
   }
 }
 
@@ -119,11 +120,14 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
     }
 
     let data: Record[] = [];
-    for (const key of Object.keys(this.dict)) {
-      if (start.length && compare(start, fromBase64(key)) === 1) continue;
-      if (end.length && compare(fromBase64(key), end) > -1) break;
+    for (const key of this.dict.keys()) {
+      if (start.length && compare(start, key) === 1) continue;
+      if (end.length && compare(key, end) > -1) break;
 
-      data.push({ key: fromBase64(key), value: fromBase64(this.dict[key]!) });
+      data.push({
+        key: key,
+        value: this.dict.get(key)!,
+      });
     }
 
     if (order === Order.Descending) {
