@@ -69,6 +69,7 @@
     "@types/secp256k1": "^4.0.3",
     "bech32": "^2.0.0",
     "elliptic": "^6.5.4",
+    "immutable": "^4.1.0",
     "process": "^0.11.10",
     "secp256k1": "^4.0.3",
     "synchronized-promise": "^0.3.1",
