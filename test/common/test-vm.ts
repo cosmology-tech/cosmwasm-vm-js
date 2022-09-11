@@ -3,7 +3,7 @@ import { VMInstance, IBackend, BasicBackendApi, BasicKVIterStorage, BasicQuerier
 import { KEY1, VALUE1, KEY2, VALUE2 } from './test-data';
 
 export const createVM = async (): Promise<VMInstance> => {
-  const wasmByteCode = readFileSync('./testdata/hackatom.wasm');
+  const wasmByteCode = readFileSync('./testdata/v1.0/hackatom.wasm');
   const backend: IBackend = {
     backend_api: new BasicBackendApi('terra'),
     storage: new BasicKVIterStorage(),
