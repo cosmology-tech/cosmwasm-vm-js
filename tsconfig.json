@@ -30,6 +30,7 @@
     "downlevelIteration": true,
     "outDir": "dist",
     "rootDir": "src",
+    "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
     "strictFunctionTypes": true,
