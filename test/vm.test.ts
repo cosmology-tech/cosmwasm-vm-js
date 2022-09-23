@@ -1,6 +1,8 @@
 import { readFileSync } from 'fs';
 import { BasicKVIterStorage, VMInstance } from '../src';
 import { BasicBackendApi, BasicQuerier, IBackend } from '../src/backend';
+import { writeData } from './common/test-vm';
+import * as testData from './common/test-data';
 
 const wasmByteCode = readFileSync('testdata/v1.0/cosmwasm_vm_test.wasm');
 const backend: IBackend = {
@@ -63,5 +65,34 @@ describe('CosmWasmVM', () => {
       },
     };
     expect(region.json).toEqual(actual);
+  });
+
+  it('serializes', async () => {
+    // Arrange
+    await vm.build(wasmByteCode);
+    vm.instantiate(mockEnv, mockInfo, { count: 20 });
+
+    // Act
+    const json = JSON.stringify(vm);
+
+    // Assert
+    expect(json).toBeDefined();
+  });
+
+  it('serializes after edda usage', async () => {
+    // Arrange
+    await vm.build(wasmByteCode);
+    vm.instantiate(mockEnv, mockInfo, { count: 20 });
+
+    const hashPtr = writeData(vm, testData.EDDSA_MSG_HEX);
+    const sigPtr = writeData(vm, testData.EDDSA_SIG_HEX);
+    const pubkeyPtr = writeData(vm, testData.EDDSA_PUBKEY_HEX);
+    vm.do_ed25519_verify(hashPtr, sigPtr, pubkeyPtr);
+
+    // Act
+    const json = JSON.stringify(vm);
+
+    // Assert
+    expect(json).toBeDefined();
   });
 });

@@ -2,7 +2,6 @@
 import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
-import { eddsa } from 'elliptic';
 import { IBackend, Record } from './backend';
 import { toByteArray } from './helpers/byte-array';
 
@@ -16,12 +15,10 @@ export class VMInstance {
   public instance?: WebAssembly.Instance;
   public backend: IBackend;
   public bech32: BechLib;
-  public eddsa: eddsa;
 
   constructor(backend: IBackend) {
     this.backend = backend;
     this.bech32 = bech32;
-    this.eddsa = new eddsa('ed25519');
   }
 
   public async build(wasmByteCode: ArrayBuffer) {
@@ -371,10 +368,10 @@ export class VMInstance {
     const sig = Buffer.from(signature.data).toString('hex');
     const pub = Buffer.from(pubkey.data).toString('hex');
     const msg = Buffer.from(message.data).toString('hex');
-    const _signature = this.eddsa.makeSignature(sig);
-    const _pubkey = this.eddsa.keyFromPublic(pub);
+    const _signature = global.eddsa().makeSignature(sig);
+    const _pubkey = global.eddsa().keyFromPublic(pub);
 
-    const isValidSignature = this.eddsa.verify(msg, _signature, _pubkey);
+    const isValidSignature = global.eddsa().verify(msg, _signature, _pubkey);
 
     if (isValidSignature) {
       return 0;
@@ -410,10 +407,10 @@ export class VMInstance {
       const _sig = Buffer.from(sig).toString('hex');
       const _pub = Buffer.from(pub).toString('hex');
       const _msg = Buffer.from(msg).toString('hex');
-      const _signature = this.eddsa.makeSignature(_sig);
-      const _pubkey = this.eddsa.keyFromPublic(_pub);
+      const _signature = global.eddsa().makeSignature(_sig);
+      const _pubkey = global.eddsa().keyFromPublic(_pub);
 
-      const isValidSignature = this.eddsa.verify(_msg, _signature, _pubkey);
+      const isValidSignature = global.eddsa().verify(_msg, _signature, _pubkey);
 
       if (!isValidSignature) {
         return 1;
