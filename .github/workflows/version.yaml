@@ -1,5 +1,6 @@
 name: Auto-increment patch version number
-on: 
+on:
+  workflow_dispatch: {}
   push:
     branches:
       - main
