@@ -28,13 +28,7 @@ export enum Order {
   Descending = 2,
 }
 
-export interface IIterStorage {
-  get(key: Uint8Array): Uint8Array | null;
-
-  set(key: Uint8Array, value: Uint8Array): void;
-
-  remove(key: Uint8Array): void;
-
+export interface IIterStorage extends IStorage {
   all(iterator_id: number): Array<Record>;
 
   scan(start: Uint8Array | null, end: Uint8Array | null, order: Order): number; // Uint32
