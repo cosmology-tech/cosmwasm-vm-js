@@ -1,13 +1,13 @@
 import { readFileSync } from 'fs';
-import { VMInstance } from "../src/instance";
+import { VMInstance } from "../../src/instance";
 import {
   BasicBackendApi,
   BasicKVIterStorage,
   BasicQuerier,
   IBackend,
-} from '../src/backend';
+} from '../../src/backend';
 import { fromAscii, fromBase64 } from '@cosmjs/encoding';
-import { Region } from '../src/memory';
+import { Region } from '../../src/memory';
 
 const wasmBytecode = readFileSync('testdata/v1.0/hackatom.wasm');
 const backend: IBackend = {
@@ -35,7 +35,7 @@ const mockInfo: { sender: string, funds: { amount: string, denom: string }[] } =
 };
 
 let vm: VMInstance;
-describe('integration', () => {
+describe('hackatom', () => {
   beforeEach(async () => {
     vm = new VMInstance(backend);
     await vm.build(wasmBytecode);
