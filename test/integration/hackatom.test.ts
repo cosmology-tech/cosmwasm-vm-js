@@ -106,7 +106,7 @@ describe('hackatom', () => {
     // Act
     const response = vm.instantiate(
       mockEnv,
-      { funds: [{ amount: '1000', denom: 'earth' }] }, // invalid info message, missing sender field
+      { funds: [{ amount: '1000', denom: 'earth' }] } as any, // invalid info message, missing sender field
       { verifier, beneficiary });
 
     // Assert
