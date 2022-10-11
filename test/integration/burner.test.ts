@@ -14,8 +14,7 @@ import {
   IBackend,
   Order,
 } from '../../src/backend';
-import { fromAscii, fromBase64, toAscii } from '@cosmjs/encoding';
-import { writeData } from '../common/test-vm';
+import { toAscii } from '@cosmjs/encoding';
 import { Env, MessageInfo } from '../../src/types';
 
 const wasmBytecode = readFileSync('testdata/v1.1/burner.wasm');
@@ -43,47 +42,55 @@ describe('burner', () => {
     vm = new VMInstance(backend);
     await vm.build(wasmBytecode);
   });
-  
+
   // port of https://github.com/CosmWasm/cosmwasm/blob/f6a0485088f1084379a5655bcc2956526290c09f/contracts/burner/tests/integration.rs#L32
   it('instantiate_fails', async () => {
+    // Arrange
     const mockInfo: MessageInfo = {
       sender: creator,
       funds: [
         { denom: 'earth', amount: '1000' },
       ],
     }
+
+    // Act
     const instantiateResponse = vm.instantiate(mockEnv, mockInfo, {});
+
+    // Assert
     expect(instantiateResponse.json).toEqual({
       error: 'Generic error: You can only use this contract for migrations',
     });
   });
-  
+
   // port of https://github.com/CosmWasm/cosmwasm/blob/f6a0485088f1084379a5655bcc2956526290c09f/contracts/burner/tests/integration.rs#L47
   // TODO: querier not yet implemented
   // test verifies two things:
   // 1) remaining coins in storage (123456 gold) are sent to payout address
   // 2) storage is purged
   it.skip('migrate_cleans_up_data', async () => {
+    // Arrange
     // TODO: VM instance w/ coin data & Bank module
     // const vm = new VMInstance(backend, [{ denom: 'gold', amount: '123456' }]);
     const storage = vm.backend.storage;
-    
+
     storage.set(toAscii('foo'), toAscii('bar'));
     storage.set(toAscii('key2'), toAscii('data2'));
     storage.set(toAscii('key3'), toAscii('cool stuff'));
-    
+
     // TODO: support scan(null, null, Order)
     let iterId = storage.scan(null, null, Order.Ascending);
     let cnt = storage.all(iterId);
     expect(cnt.length).toStrictEqual(3);
-    
+
     const migrateMsg = { payout };
+
+    // Act
     const res = vm.migrate(mockEnv, migrateMsg).json as any;
+
+    // Assert
     expect(res.messages.length).toStrictEqual(1);
-    const msg = res.messages[0];
-    expect(msg).toBeDefined();
+    expect(res.messages[0]).toBeDefined();
     // TODO: msg is SubMsg w/ BankMsg::Send to payout of all coins in contract
-    
     iterId = storage.scan(null, null, Order.Ascending);
     cnt = storage.all(iterId);
     expect(cnt.length).toStrictEqual(0);
