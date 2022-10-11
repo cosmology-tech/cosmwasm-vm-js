@@ -101,9 +101,9 @@ export class VMInstance {
     return this.region(result);
   }
 
-  public query(info: MessageInfo, msg: object): Region {
+  public query(env: Env, msg: object): Region {
     let { query } = this.exports;
-    let args = [info, msg].map((x) => this.allocate_json(x).ptr);
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = query(...args);
     return this.region(result);
   }
