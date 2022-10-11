@@ -4,10 +4,9 @@ export interface IQuerier {
 }
 
 export class BasicQuerier implements IQuerier {
-  balances: Map<string, { amount: string, denom: string }[]>;
+  private balances: Map<string, { amount: string, denom: string }[]> = new Map();
 
   constructor() {
-    this.balances = new Map();
     this.query_raw = this.query_raw.bind(this);
   }
 
