@@ -2,11 +2,16 @@
 export type Address = string;
 
 /** Port of [Env (Rust)](https://docs.rs/cosmwasm-std/1.1.4/cosmwasm_std/struct.Env.html) */
-export type Env = {
-  block: BlockInfo;
-  transaction?: TransactionInfo;
-  contract: ContractInfo;
-}
+export type Env =
+  | {
+      block: BlockInfo;
+      contract: ContractInfo;
+    }
+  | {
+      block: BlockInfo;
+      transaction: TransactionInfo | null;
+      contract: ContractInfo;
+    }
 
 export type BlockInfo = {
   height: number | string;
