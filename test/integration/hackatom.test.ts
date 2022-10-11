@@ -9,7 +9,7 @@ import {
 import { fromAscii, fromBase64 } from '@cosmjs/encoding';
 import { Region } from '../../src/memory';
 
-const wasmBytecode = readFileSync('testdata/v1.0/hackatom.wasm');
+const wasmBytecode = readFileSync('testdata/v1.1/hackatom.wasm');
 const backend: IBackend = {
   backend_api: new BasicBackendApi('terra'),
   storage: new BasicKVIterStorage(),
@@ -19,14 +19,15 @@ const backend: IBackend = {
 const verifier = 'terra1kzsrgcktshvqe9p089lqlkadscqwkezy79t8y9';
 const beneficiary = 'terra1zdpgj8am5nqqvht927k3etljyl6a52kwqup0je';
 const creator = 'terra1337xewwfv3jdjuz8e0nea9vd8dpugc0k2dcyt3';
+const mockContractAddr = 'cosmos2contract';
 
 const mockEnv = {
   block: {
-    height: 1337,
-    time: '2000000000',
-    chain_id: 'columbus-5',
+    height: 12345,
+    time: '1571797419879305533',
+    chain_id: 'cosmos-testnet-14002',
   },
-  contract: { address: 'terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76' }
+  contract: { address: mockContractAddr }
 };
 
 const mockInfo: { sender: string, funds: { amount: string, denom: string }[] } = {
@@ -87,19 +88,24 @@ describe('hackatom', () => {
 
   it.skip('sudo_can_steal_tokens', async () => {}); // sudo not implemented
 
-  it.skip('querier_callbacks_work', async () => { // query_chain not implemented
+  it('querier_callbacks_work', async () => {
     // Arrange
-    vm.instantiate(
-      mockEnv,
-      { sender: creator, funds: [{ amount: '10000', denom: 'gold' }] },
-      { verifier, beneficiary });
+    const richAddress = 'foobar';
+    const richBalance = [{ amount: '10000', denom: 'gold' }];
+    vm.backend.querier.update_balance(richAddress, richBalance);
+
+    vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
 
     // Act
-    const queryResponse = vm.query(mockEnv, { other_balance: { address: creator } });
+    const queryResponse = vm.query(mockEnv, { other_balance: { address: richAddress } });
+    const queryResponseWrongAddress = vm.query(mockEnv, { other_balance: { address: 'other address' } });
 
     // Assert
     expectResponseToBeOk(queryResponse);
-    // ToDo: moar assert
+    expect(parseBase64Response(queryResponse).amount).toEqual(richBalance);
+
+    expectResponseToBeOk(queryResponseWrongAddress);
+    expect(parseBase64Response(queryResponseWrongAddress).amount).toEqual([]);
   });
 
   it('fails_on_bad_init', async () => {
@@ -113,25 +119,46 @@ describe('hackatom', () => {
     expect((response.json as { error: string }).error.indexOf('Error parsing')).toBe(0);
   });
 
-  it.skip('execute_release_works', async () => { // query_chain not implemented
+  it('execute_release_works', async () => {
     // Arrange
-    vm.instantiate(
-      mockEnv,
-      { sender: creator, funds: [{ amount: '1000', denom: 'earth' }] },
-      { verifier, beneficiary });
+    vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
+    vm.backend.querier.update_balance(mockContractAddr, [{ amount: '1000', denom: 'earth' }]);
 
     // Act
     const execResponse = vm.execute(
       mockEnv,
       { sender: verifier, funds: [] },
-      { release: {}});
+      { release: {} });
 
     // Assert
     expectResponseToBeOk(execResponse);
-    // ToDo: moar assert
+
+    expect((execResponse.json as any).ok.messages.length).toBe(1);
+    expect((execResponse.json as any).ok.messages[0].msg.bank.send.to_address).toBe(beneficiary);
+    expect((execResponse.json as any).ok.messages[0].msg.bank.send.amount).toStrictEqual([{ amount: '1000', denom: 'earth' }]);
+
+    expect((execResponse.json as any).ok.attributes[0]).toStrictEqual({key: 'action', value: 'release'});
+    expect((execResponse.json as any).ok.attributes[1]).toStrictEqual({key: 'destination', value: beneficiary});
+
+    expect(fromBase64((execResponse.json as any).ok.data)[0]).toBe(240); // 0xF0
+    expect(fromBase64((execResponse.json as any).ok.data)[1]).toBe(11);  // 0x0B
+    expect(fromBase64((execResponse.json as any).ok.data)[2]).toBe(170); // 0xAA
   });
 
-  it.skip('execute_release_fails_for_wrong_sender', async () => {}); // query_chain not implemented
+  it('execute_release_fails_for_wrong_sender', async () => {
+    // Arrange
+    vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
+    vm.backend.querier.update_balance(mockContractAddr, [{ amount: '1000', denom: 'earth' }]);
+
+    // Act
+    const execResponse = vm.execute(
+      mockEnv,
+      { sender: beneficiary, funds: [] },
+      { release: {} });
+
+    // Assert
+    expect((execResponse.json as any).error).toBe('Unauthorized');
+  });
 
   it('execute_panic', async () => {
     // Arrange

@@ -14,11 +14,9 @@ export const MAX_LENGTH_HUMAN_ADDRESS: number = 256;
 export class VMInstance {
   public PREFIX: string = 'terra';
   public instance?: WebAssembly.Instance;
-  public backend: IBackend;
   public bech32: BechLib;
 
-  constructor(backend: IBackend) {
-    this.backend = backend;
+  constructor(public backend: IBackend) {
     this.bech32 = bech32;
   }
 
@@ -138,6 +136,7 @@ export class VMInstance {
   }
 
   db_next(iterator_id: number): number {
+    console.log(iterator_id)
     return this.do_db_next(iterator_id).ptr;
   }
 
@@ -425,7 +424,11 @@ export class VMInstance {
   }
 
   do_query_chain(request: Region): Region {
-    throw new Error('not implemented');
+    const resultPtr = this.backend.querier.query_raw(request.data, 100000);
+
+    let region = this.allocate(resultPtr.length);
+    region.write(resultPtr);
+    return region;
   }
 
   do_abort(message: Region, file: Region, line: number, column: number) {

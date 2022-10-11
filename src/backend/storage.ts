@@ -9,7 +9,7 @@ export interface IStorage {
   set(key: Uint8Array, value: Uint8Array): void;
 
   remove(key: Uint8Array): void;
-  
+
   keys(): Iterable<Uint8Array>;
 }
 
@@ -38,7 +38,7 @@ export interface IIterStorage extends IStorage {
 export class BasicKVStorage implements IStorage {
   // TODO: Add binary uint / typed Addr maps for cw-storage-plus compatibility
   constructor(public dict: Immutable.Map<string, string> = Immutable.Map()) {}
-  
+
   *keys() {
     for (const key of this.dict.keys()) {
       yield fromBase64(key);
