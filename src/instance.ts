@@ -4,6 +4,7 @@ import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
 import { toByteArray } from './helpers/byte-array';
+import { Env, MessageInfo } from 'types';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -86,28 +87,28 @@ export class VMInstance {
     return region;
   }
 
-  public instantiate(env: object, info: object, msg: object): Region {
+  public instantiate(env: Env, info: MessageInfo, msg: object): Region {
     let { instantiate } = this.exports;
     let args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
     let result = instantiate(...args);
     return this.region(result);
   }
 
-  public execute(env: object, info: object, msg: object): Region {
+  public execute(env: Env, info: MessageInfo, msg: object): Region {
     let { execute } = this.exports;
     let args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
     let result = execute(...args);
     return this.region(result);
   }
 
-  public query(info: object, msg: object): Region {
+  public query(info: MessageInfo, msg: object): Region {
     let { query } = this.exports;
     let args = [info, msg].map((x) => this.allocate_json(x).ptr);
     let result = query(...args);
     return this.region(result);
   }
 
-  public migrate(env: object, msg: object): Region {
+  public migrate(env: Env, msg: object): Region {
     let { migrate } = this.exports;
     let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = migrate(...args);
