@@ -6,10 +6,10 @@ import {
   BasicQuerier,
   IBackend,
 } from '../../src/backend';
-import { fromAscii, fromBase64, toAscii } from '@cosmjs/encoding';
+import { fromAscii, fromBase64 } from '@cosmjs/encoding';
 import { Region } from '../../src/memory';
 
-const wasmBytecode = readFileSync('testdata/v1.0/hackatom.wasm');
+const wasmBytecode = readFileSync('testdata/v1.1/hackatom.wasm');
 const backend: IBackend = {
   backend_api: new BasicBackendApi('terra'),
   storage: new BasicKVIterStorage(),
