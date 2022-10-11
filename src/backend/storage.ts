@@ -9,7 +9,7 @@ export interface IStorage {
   set(key: Uint8Array, value: Uint8Array): void;
 
   remove(key: Uint8Array): void;
-  
+
   keys(): Iterable<Uint8Array>;
 }
 
@@ -38,7 +38,7 @@ export interface IIterStorage extends IStorage {
 export class BasicKVStorage implements IStorage {
   // TODO: Add binary uint / typed Addr maps for cw-storage-plus compatibility
   constructor(public dict: Immutable.Map<string, string> = Immutable.Map()) {}
-  
+
   *keys() {
     for (const key of this.dict.keys()) {
       yield fromBase64(key);
@@ -108,7 +108,7 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
     return record;
   }
 
-  scan(start: Uint8Array, end: Uint8Array, order: Order): number {
+  scan(start: Uint8Array | null, end: Uint8Array | null, order: Order): number {
     if (!(order in Order)) {
       throw new Error(`Invalid order value ${order}.`);
     }
@@ -116,15 +116,15 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
     const newId = this.iterators.size + 1;
 
     // if start > end, this represents an empty range
-    if (start.length && end.length && compare(start, end) === 1) {
+    if (start?.length && end?.length && compare(start, end) === 1) {
       this.iterators.set(newId, { data: [], position: 0 });
       return newId;
     }
 
     let data: Record[] = [];
     for (const key of this.dict.keys()) {
-      if (start.length && compare(start, fromBase64(key)) === 1) continue;
-      if (end.length && compare(fromBase64(key), end) > -1) break;
+      if (start?.length && compare(start, fromBase64(key)) === 1) continue;
+      if (end?.length && compare(fromBase64(key), end) > -1) break;
 
       data.push({ key: fromBase64(key), value: this.get(fromBase64(key))! });
     }
