@@ -6,10 +6,10 @@ import { KEY1, VALUE1, KEY2, VALUE2 } from './test-data';
 export function wrapResult(res: any) {
   if (res instanceof Region)
     res = res.json;
-  
+
   if (typeof res !== 'object')
     throw new Error('StdResult is not an object');
-  
+
   const isOk = !!res.ok;
   return {
     isOk,
@@ -62,5 +62,13 @@ export function parseBase64Response(data: string): any {
     return JSON.parse(str);
   } catch (_) {
     throw new Error(`Data value is not valid JSON: ${str}`)
+  }
+}
+
+export function expectResponseToBeOk(region: Region) {
+  try {
+    expect((region.json as { ok: string }).ok).toBeDefined();
+  } catch (_) {
+    throw new Error(`Expected response to be ok; instead got: ${JSON.stringify(region.json)}`);
   }
 }
