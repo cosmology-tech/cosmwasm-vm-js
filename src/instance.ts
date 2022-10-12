@@ -16,7 +16,7 @@ export class VMInstance {
   public instance?: WebAssembly.Instance;
   public bech32: BechLib;
 
-  constructor(public backend: IBackend) {
+  constructor(public backend: IBackend, public readonly gasLimit?: number | undefined) {
     this.bech32 = bech32;
   }
 
@@ -49,6 +49,10 @@ export class VMInstance {
     if (!this.instance)
       throw new Error('Please init instance before using methods');
     return this.instance!.exports;
+  }
+
+  public get remainingGas() {
+    return this.gasLimit; // TODO: implement
   }
 
   public allocate(size: number): Region {
@@ -135,8 +139,8 @@ export class VMInstance {
     return this.do_db_scan(start, end, order).ptr;
   }
 
-  db_next(iterator_id: number): number {
-    console.log(iterator_id)
+  db_next(iterator_id_ptr: number): number {
+    let iterator_id = this.region(iterator_id_ptr);
     return this.do_db_next(iterator_id).ptr;
   }
 
@@ -257,16 +261,14 @@ export class VMInstance {
   }
 
   do_db_scan(start: Region, end: Region, order: number): Region {
-    const iterId = this.backend.storage.scan(start.data, end.data, order);
-    const iterIdBytes = toByteArray(iterId);
-
+    const iterIdBytes = this.backend.storage.scan(start.data, end.data, order);
     let region = this.allocate(iterIdBytes.length);
     region.write(iterIdBytes);
     return region;
   }
 
-  do_db_next(iterator_id: number): Region {
-    const record: Record | null = this.backend.storage.next(iterator_id);
+  do_db_next(iterator_id: Region): Region {
+    const record: Record | null = this.backend.storage.next(iterator_id.data);
     let result;
     if (record === null) {
       result = this.region(0);

@@ -729,13 +729,13 @@ describe('db_scan', () => {
     const id = toNumber(idRegion.data);
     expect(id).toBe(1);
 
-    let item = vm.do_db_next(id);
+    let item = vm.do_db_next(idRegion);
     expectToBeKvp(item, testData.KEY1, testData.VALUE1);
 
-    item = vm.do_db_next(id);
+    item = vm.do_db_next(idRegion);
     expectToBeKvp(item, testData.KEY2, testData.VALUE2);
 
-    item = vm.do_db_next(id);
+    item = vm.do_db_next(idRegion);
     expect(item.ptr).toBe(0);
   });
 
@@ -744,13 +744,13 @@ describe('db_scan', () => {
     const id = toNumber(idRegion.data);
     expect(id).toBe(1);
 
-    let item = vm.do_db_next(id);
+    let item = vm.do_db_next(idRegion);
     expectToBeKvp(item, testData.KEY2, testData.VALUE2);
 
-    item = vm.do_db_next(id);
+    item = vm.do_db_next(idRegion);
     expectToBeKvp(item, testData.KEY1, testData.VALUE1);
 
-    item = vm.do_db_next(id);
+    item = vm.do_db_next(idRegion);
     expect(item.ptr).toBe(0);
   });
 
@@ -762,10 +762,10 @@ describe('db_scan', () => {
     const id = toNumber(idRegion.data);
     expect(id).toBe(1);
 
-    let item = vm.do_db_next(id);
+    let item = vm.do_db_next(idRegion);
     expectToBeKvp(item, testData.KEY1, testData.VALUE1);
 
-    item = vm.do_db_next(id);
+    item = vm.do_db_next(idRegion);
     expect(item.ptr).toBe(0);
   });
 
@@ -777,10 +777,10 @@ describe('db_scan', () => {
     const id = toNumber(idRegion.data);
     expect(id).toBe(1);
 
-    let item = vm.do_db_next(id);
+    let item = vm.do_db_next(idRegion);
     expectToBeKvp(item, testData.KEY2, testData.VALUE2);
 
-    item = vm.do_db_next(id);
+    item = vm.do_db_next(idRegion);
     expect(item.ptr).toBe(0);
   });
 
@@ -793,11 +793,11 @@ describe('db_scan', () => {
     const id2 = toNumber(idRegion2.data);
     expect(id2).toBe(2);
 
-    expectToBeKvp(vm.do_db_next(id1), testData.KEY1, testData.VALUE1); // first item, first iterator
-    expectToBeKvp(vm.do_db_next(id1), testData.KEY2, testData.VALUE2); // second item, first iterator
-    expectToBeKvp(vm.do_db_next(id2), testData.KEY2, testData.VALUE2); // first item, second iterator
-    expect(vm.do_db_next(id1).ptr).toBe(0);                            // end, first iterator
-    expectToBeKvp(vm.do_db_next(id2), testData.KEY1, testData.VALUE1); // second item, second iterator
+    expectToBeKvp(vm.do_db_next(idRegion1), testData.KEY1, testData.VALUE1); // first item, first iterator
+    expectToBeKvp(vm.do_db_next(idRegion1), testData.KEY2, testData.VALUE2); // second item, first iterator
+    expectToBeKvp(vm.do_db_next(idRegion2), testData.KEY2, testData.VALUE2); // first item, second iterator
+    expect(vm.do_db_next(idRegion1).ptr).toBe(0);                            // end, first iterator
+    expectToBeKvp(vm.do_db_next(idRegion2), testData.KEY1, testData.VALUE1); // second item, second iterator
   });
 
   it('fails for invalid order value', () => {
@@ -813,18 +813,17 @@ describe('do_db_next', () => {
 
   it('works', () => {
     const idRegion = vm.do_db_scan(vm.allocate(0), vm.allocate(0), Order.Ascending);
-    const id = toNumber(idRegion.data);
 
-    expectToBeKvp(vm.do_db_next(id), testData.KEY1, testData.VALUE1);
-    expectToBeKvp(vm.do_db_next(id), testData.KEY2, testData.VALUE2);
-    expect(vm.do_db_next(id).ptr).toBe(0);
+    expectToBeKvp(vm.do_db_next(idRegion), testData.KEY1, testData.VALUE1);
+    expectToBeKvp(vm.do_db_next(idRegion), testData.KEY2, testData.VALUE2);
+    expect(vm.do_db_next(idRegion).ptr).toBe(0);
   });
 
   it('fails for non existent id', () => {
     try {
-      vm.do_db_next(0);
+      vm.do_db_next(vm.region(0));
     } catch (e) {
-      expect(e).toEqual(new Error('Iterator 0 not found.'));
+      expect(e).toEqual(new Error('Iterator not found.'));
     }
   });
 });

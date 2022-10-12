@@ -1,5 +1,5 @@
 import { fromBase64, toBase64 } from '@cosmjs/encoding';
-import { compare } from '../helpers/byte-array';
+import { compare, toByteArray, toNumber } from '../helpers/byte-array';
 import Immutable from 'immutable';
 import { MAX_LENGTH_DB_KEY } from '../instance';
 
@@ -29,10 +29,10 @@ export enum Order {
 }
 
 export interface IIterStorage extends IStorage {
-  all(iterator_id: number): Array<Record>;
+  all(iterator_id: Uint8Array): Array<Record>;
 
-  scan(start: Uint8Array | null, end: Uint8Array | null, order: Order): number; // Uint32
-  next(iterator_id: number /* Uint32 */): Record | null;
+  scan(start: Uint8Array | null, end: Uint8Array | null, order: Order): Uint8Array;
+  next(iterator_id: Uint8Array): Record | null;
 }
 
 export class BasicKVStorage implements IStorage {
@@ -75,7 +75,7 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
     super();
   }
 
-  all(iterator_id: number): Array<Record> {
+  all(iterator_id: Uint8Array): Array<Record> {
     const out: Array<Record> = [];
     let condition = true;
     while (condition) {
@@ -94,10 +94,10 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
   // Ownership of the result region is transferred to the contract.
   // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value.
   // An empty key (i.e. KV region ends with \0\0\0\0) means no more element, no matter what the value is.
-  next(iterator_id: number): Record | null {
-    const iter = this.iterators.get(iterator_id);
+  next(iterator_id: Uint8Array): Record | null {
+    const iter = this.iterators.get(toNumber(iterator_id));
     if (iter === undefined) {
-      throw new Error(`Iterator ${iterator_id} not found.`);
+      throw new Error(`Iterator not found.`);
     }
     const record = iter.data[iter.position];
     if (!record) {
@@ -108,7 +108,7 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
     return record;
   }
 
-  scan(start: Uint8Array, end: Uint8Array, order: Order): number {
+  scan(start: Uint8Array | null, end: Uint8Array | null, order: Order): Uint8Array {
     if (!(order in Order)) {
       throw new Error(`Invalid order value ${order}.`);
     }
@@ -116,15 +116,15 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
     const newId = this.iterators.size + 1;
 
     // if start > end, this represents an empty range
-    if (start.length && end.length && compare(start, end) === 1) {
+    if (start?.length && end?.length && compare(start, end) === 1) {
       this.iterators.set(newId, { data: [], position: 0 });
-      return newId;
+      return toByteArray(newId);
     }
 
     let data: Record[] = [];
     for (const key of this.dict.keys()) {
-      if (start.length && compare(start, fromBase64(key)) === 1) continue;
-      if (end.length && compare(fromBase64(key), end) > -1) break;
+      if (start?.length && compare(start, fromBase64(key)) === 1) continue;
+      if (end?.length && compare(fromBase64(key), end) > -1) break;
 
       data.push({ key: fromBase64(key), value: this.get(fromBase64(key))! });
     }
@@ -134,6 +134,6 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
     }
 
     this.iterators.set(newId, { data, position: 0 });
-    return newId;
+    return toByteArray(newId);
   }
 }

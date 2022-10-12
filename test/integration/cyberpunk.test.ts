@@ -43,13 +43,11 @@ describe('cyberpunk', () => {
   // port of https://github.com/CosmWasm/cosmwasm/blob/f6a0485088f1084379a5655bcc2956526290c09f/contracts/cyberpunk/tests/integration.rs#L30
   it.skip('execute_argon2', async () => { // gas limit not implemented
     // Arrange
-    // TODO: implement gas limit on VM
-    // const vm = new VMInstance(backend, { gasLimit: 100_000_000_000_000 })
+    vm = new VMInstance(backend, 100_000_000_000_000); // TODO: implement gas limit on VM
     const initRes = vm.instantiate(mockEnv, mockInfo, {}).json as any;
     expect(initRes.messages.length).toStrictEqual(0);
 
-    // TODO: getGasLeft method
-    // const gasBefore = vm.getGasLeft();
+    const gasBefore = vm.remainingGas;
 
     // Act
     const executeRes = vm.execute(
