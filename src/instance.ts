@@ -214,10 +214,9 @@ export class VMInstance {
     return this.do_query_chain(request).ptr;
   }
 
-  abort(message_ptr: number, file_ptr: number, line: number, column: number) {
+  abort(message_ptr: number) {
     let message = this.region(message_ptr);
-    let file = this.region(file_ptr);
-    this.do_abort(message, file, line, column);
+    this.do_abort(message);
   }
 
   public region(ptr: number): Region {
@@ -430,9 +429,7 @@ export class VMInstance {
     return region;
   }
 
-  do_abort(message: Region, file: Region, line: number, column: number) {
-    throw new Error(
-      `abort: ${message.read_str()} at ${file.read_str()}:${line}:${column}`
-    );
+  do_abort(message: Region) {
+    throw new Error(`abort: ${message.read_str()}`);
   }
 }
