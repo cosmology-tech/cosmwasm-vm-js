@@ -67,18 +67,25 @@ describe('burner', () => {
   // test verifies two things:
   // 1) remaining coins in storage (123456 gold) are sent to payout address
   // 2) storage is purged
-  it.skip('migrate_cleans_up_data', async () => {
+  it('migrate_cleans_up_data', async () => {
     // Arrange
     // TODO: VM instance w/ coin data & Bank module
-    // const vm = new VMInstance(backend, [{ denom: 'gold', amount: '123456' }]);
+    const querier = vm.backend.querier;
     const storage = vm.backend.storage;
+    
+    querier.update_balance(
+      'terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76',
+      [{
+        denom: 'gold',
+        amount: '123456',
+      }],
+    );
 
     storage.set(toAscii('foo'), toAscii('bar'));
     storage.set(toAscii('key2'), toAscii('data2'));
     storage.set(toAscii('key3'), toAscii('cool stuff'));
 
-    // TODO: support scan(null, null, Order)
-    let iterId = storage.scan(null, null, Order.Ascending);
+    let iterId = storage.scan(new Uint8Array(0), new Uint8Array(0), Order.Ascending);
     let cnt = storage.all(iterId);
     expect(cnt.length).toStrictEqual(3);
 
@@ -90,8 +97,8 @@ describe('burner', () => {
     // Assert
     expect(res.messages.length).toStrictEqual(1);
     expect(res.messages[0]).toBeDefined();
-    // TODO: msg is SubMsg w/ BankMsg::Send to payout of all coins in contract
-    iterId = storage.scan(null, null, Order.Ascending);
+    
+    iterId = storage.scan(new Uint8Array(0), new Uint8Array(0), Order.Ascending);
     cnt = storage.all(iterId);
     expect(cnt.length).toStrictEqual(0);
   });
