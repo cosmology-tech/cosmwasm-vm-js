@@ -28,7 +28,7 @@ describe('do_db_read', () => {
     const keyPtr = writeData(vm, toAscii('I do not exist in storage'));
     const result = vm.do_db_read(keyPtr);
 
-    expect(result.ptr).toEqual(0);
+    expect(toNumber(result.data)).toEqual(0);
   });
 
   it('fails for large key', async () => {
@@ -736,7 +736,7 @@ describe('db_scan', () => {
     expectToBeKvp(item, testData.KEY2, testData.VALUE2);
 
     item = vm.do_db_next(idRegion);
-    expect(item.ptr).toBe(0);
+    expect(toNumber(item.data)).toBe(0);
   });
 
   it('unbound descending works', () => {
@@ -751,7 +751,7 @@ describe('db_scan', () => {
     expectToBeKvp(item, testData.KEY1, testData.VALUE1);
 
     item = vm.do_db_next(idRegion);
-    expect(item.ptr).toBe(0);
+    expect(toNumber(item.data)).toBe(0);
   });
 
   it('bound works', () => {
@@ -766,7 +766,7 @@ describe('db_scan', () => {
     expectToBeKvp(item, testData.KEY1, testData.VALUE1);
 
     item = vm.do_db_next(idRegion);
-    expect(item.ptr).toBe(0);
+    expect(toNumber(item.data)).toBe(0);
   });
 
   it('bound descending works', () => {
@@ -781,7 +781,7 @@ describe('db_scan', () => {
     expectToBeKvp(item, testData.KEY2, testData.VALUE2);
 
     item = vm.do_db_next(idRegion);
-    expect(item.ptr).toBe(0);
+    expect(toNumber(item.data)).toBe(0);
   });
 
   it('multiple iterators', () => {
@@ -796,7 +796,7 @@ describe('db_scan', () => {
     expectToBeKvp(vm.do_db_next(idRegion1), testData.KEY1, testData.VALUE1); // first item, first iterator
     expectToBeKvp(vm.do_db_next(idRegion1), testData.KEY2, testData.VALUE2); // second item, first iterator
     expectToBeKvp(vm.do_db_next(idRegion2), testData.KEY2, testData.VALUE2); // first item, second iterator
-    expect(vm.do_db_next(idRegion1).ptr).toBe(0);                            // end, first iterator
+    expect(toNumber(vm.do_db_next(idRegion1).data)).toBe(0);                            // end, first iterator
     expectToBeKvp(vm.do_db_next(idRegion2), testData.KEY1, testData.VALUE1); // second item, second iterator
   });
 
@@ -816,7 +816,7 @@ describe('do_db_next', () => {
 
     expectToBeKvp(vm.do_db_next(idRegion), testData.KEY1, testData.VALUE1);
     expectToBeKvp(vm.do_db_next(idRegion), testData.KEY2, testData.VALUE2);
-    expect(vm.do_db_next(idRegion).ptr).toBe(0);
+    expect(toNumber(vm.do_db_next(idRegion).data)).toBe(0);
   });
 
   it('fails for non existent id', () => {
