@@ -226,7 +226,6 @@ export class VMInstance {
 
   do_db_read(key: Region): Region {
     let value = this.backend.storage.get(key.data);
-    let result: Region;
 
     if (key.str.length > MAX_LENGTH_DB_KEY) {
       throw new Error(
@@ -236,11 +235,10 @@ export class VMInstance {
 
     if (value === null) {
       console.log(`db_read: key not found: ${key.str}`);
-      result = this.region(0);
-    } else {
-      result = this.allocate_bytes(value);
+      return this.region(0);
     }
-    return result;
+
+    return this.allocate_bytes(value);
   }
 
   do_db_write(key: Region, value: Region) {
@@ -269,13 +267,12 @@ export class VMInstance {
 
   do_db_next(iterator_id: Region): Region {
     const record: Record | null = this.backend.storage.next(iterator_id.data);
-    let result;
+
     if (record === null) {
-      result = this.region(0);
-    } else {
-      result = this.allocate_json(record);
+      return this.region(0);
     }
-    return result;
+
+    return this.allocate_json(record);
   }
 
   do_addr_humanize(source: Region, destination: Region): Region {

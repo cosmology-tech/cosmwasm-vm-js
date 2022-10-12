@@ -40,7 +40,7 @@ describe('queue', () => {
     await vm.build(wasmBytecode);
   });
 
-  it.skip('instantiate_and_query', async () => {
+  it.only('instantiate_and_query', async () => {
     // Arrange
     const instantiateResponse = vm.instantiate(mockEnv, mockInfo, {});
     expect((instantiateResponse.json as any).ok.messages.length).toBe(0);
