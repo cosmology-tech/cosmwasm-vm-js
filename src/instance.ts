@@ -139,7 +139,8 @@ export class VMInstance {
     return this.do_db_scan(start, end, order).ptr;
   }
 
-  db_next(iterator_id: number): number {
+  db_next(iterator_id_ptr: number): number {
+    let iterator_id = this.region(iterator_id_ptr);
     return this.do_db_next(iterator_id).ptr;
   }
 
@@ -268,8 +269,8 @@ export class VMInstance {
     return region;
   }
 
-  do_db_next(iterator_id: number): Region {
-    const record: Record | null = this.backend.storage.next(iterator_id);
+  do_db_next(iterator_id: Region): Region {
+    const record: Record | null = this.backend.storage.next(iterator_id.data);
     let result;
     if (record === null) {
       result = this.region(0);
