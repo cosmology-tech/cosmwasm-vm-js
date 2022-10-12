@@ -3,7 +3,6 @@ import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
-import { toByteArray } from './helpers/byte-array';
 import { Env, MessageInfo } from 'types';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
@@ -87,6 +86,11 @@ export class VMInstance {
     let region = this.allocate(JSON.stringify(obj).length);
     region.write_json(obj);
     return region;
+  }
+
+  public allocate_none(): Region {
+    const none = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0]);
+    return this.allocate_bytes(none);
   }
 
   public instantiate(env: Env, info: MessageInfo, msg: object): Region {
@@ -232,7 +236,7 @@ export class VMInstance {
 
     if (value === null) {
       console.warn(`db_read: key not found: ${key.str}`);
-      return this.region(0);
+      return this.allocate_none();
     }
 
     return this.allocate_bytes(value);
@@ -268,7 +272,7 @@ export class VMInstance {
     const record: Record | null = this.backend.storage.next(iterator_id.data);
 
     if (record === null) {
-      return this.region(0);
+      return this.allocate_none();
     }
 
     return this.allocate_json(record);
