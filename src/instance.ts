@@ -225,16 +225,14 @@ export class VMInstance {
   }
 
   do_db_read(key: Region): Region {
-    let value = this.backend.storage.get(key.data);
+    let value: Uint8Array | null = this.backend.storage.get(key.data);
 
     if (key.str.length > MAX_LENGTH_DB_KEY) {
-      throw new Error(
-        `Key length ${key.str.length} exceeds maximum length ${MAX_LENGTH_DB_KEY}`
-      );
+      throw new Error(`Key length ${key.str.length} exceeds maximum length ${MAX_LENGTH_DB_KEY}`);
     }
 
     if (value === null) {
-      console.log(`db_read: key not found: ${key.str}`);
+      console.warn(`db_read: key not found: ${key.str}`);
       return this.region(0);
     }
 
@@ -259,9 +257,11 @@ export class VMInstance {
   }
 
   do_db_scan(start: Region, end: Region, order: number): Region {
-    const iterIdBytes = this.backend.storage.scan(start.data, end.data, order);
-    let region = this.allocate(iterIdBytes.length);
-    region.write(iterIdBytes);
+    const iteratorId: Uint8Array = this.backend.storage.scan(start.data, end.data, order);
+
+    let region = this.allocate(iteratorId.length);
+    region.write(iteratorId);
+
     return region;
   }
 
