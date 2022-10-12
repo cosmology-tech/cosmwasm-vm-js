@@ -261,9 +261,7 @@ export class VMInstance {
   }
 
   do_db_scan(start: Region, end: Region, order: number): Region {
-    const iterId = this.backend.storage.scan(start.data, end.data, order);
-    const iterIdBytes = toByteArray(iterId);
-
+    const iterIdBytes = this.backend.storage.scan(start.data, end.data, order);
     let region = this.allocate(iterIdBytes.length);
     region.write(iterIdBytes);
     return region;
