@@ -6,8 +6,9 @@ import {
   BasicQuerier,
   IBackend,
 } from '../../src/backend';
-import { fromAscii, fromBase64 } from '@cosmjs/encoding';
+import { fromBase64 } from '@cosmjs/encoding';
 import { Region } from '../../src/memory';
+import { expectResponseToBeOk, parseBase64Response } from '../common/test-vm';
 
 const wasmBytecode = readFileSync('testdata/v1.1/hackatom.wasm');
 const backend: IBackend = {
@@ -69,7 +70,7 @@ describe('hackatom', () => {
 
     // Assert
     expectResponseToBeOk(queryResponse);
-    expect(parseBase64Response(queryResponse)).toEqual({ verifier });
+    expect(parseBase64OkResponse(queryResponse)).toEqual({ verifier });
   });
 
   it('migrate_verifier', async () => {
@@ -102,10 +103,10 @@ describe('hackatom', () => {
 
     // Assert
     expectResponseToBeOk(queryResponse);
-    expect(parseBase64Response(queryResponse).amount).toEqual(richBalance);
+    expect(parseBase64OkResponse(queryResponse).amount).toEqual(richBalance);
 
     expectResponseToBeOk(queryResponseWrongAddress);
-    expect(parseBase64Response(queryResponseWrongAddress).amount).toEqual([]);
+    expect(parseBase64OkResponse(queryResponseWrongAddress).amount).toEqual([]);
   });
 
   it('fails_on_bad_init', async () => {
@@ -179,43 +180,17 @@ describe('hackatom', () => {
 
 // Helpers
 
-function expectResponseToBeOk(region: Region) {
-  try {
-    expect((region.json as { ok: string }).ok).toBeDefined();
-  } catch (_) {
-    throw new Error(`Expected response to be ok; instead got: ${JSON.stringify(region.json)}`);
-  }
-}
-
 function expectVerifierToBe(addr: string) {
   const queryResponse = vm.query(mockEnv, { verifier: {} });
-  const verifier = parseBase64Response(queryResponse);
+  const verifier = parseBase64OkResponse(queryResponse);
   expect(verifier).toEqual({ verifier: addr });
 }
 
-function parseBase64Response(region: Region): any {
+function parseBase64OkResponse(region: Region): any {
   const data = (region.json as { ok: string }).ok;
   if (!data) {
     throw new Error(`Response indicates an error state: ${JSON.stringify(region.json)}`)
   }
 
-  let bytes: Uint8Array;
-  try {
-    bytes = fromBase64(data);
-  } catch (_) {
-    throw new Error(`Data value is not base64-encoded: ${JSON.stringify(data)}`)
-  }
-
-  let str: string;
-  try {
-    str = fromAscii(bytes);
-  } catch (_) {
-    throw new Error(`Data value is not ASCII encoded: ${JSON.stringify(bytes)}`)
-  }
-
-  try {
-    return JSON.parse(str);
-  } catch (_) {
-    throw new Error(`Data value is not valid JSON: ${str}`)
-  }
+  return parseBase64Response(data);
 }
