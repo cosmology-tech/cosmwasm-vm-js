@@ -16,7 +16,7 @@ export class VMInstance {
   public instance?: WebAssembly.Instance;
   public bech32: BechLib;
 
-  constructor(public backend: IBackend) {
+  constructor(public backend: IBackend, public readonly gasLimit?: number | undefined) {
     this.bech32 = bech32;
   }
 
@@ -49,6 +49,10 @@ export class VMInstance {
     if (!this.instance)
       throw new Error('Please init instance before using methods');
     return this.instance!.exports;
+  }
+
+  public get remainingGas() {
+    return this.gasLimit; // TODO: implement
   }
 
   public allocate(size: number): Region {
@@ -136,7 +140,6 @@ export class VMInstance {
   }
 
   db_next(iterator_id: number): number {
-    console.log(iterator_id)
     return this.do_db_next(iterator_id).ptr;
   }
 
