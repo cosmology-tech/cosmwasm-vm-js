@@ -34,7 +34,7 @@ const mockInfo: { sender: string, funds: { amount: string, denom: string }[] } =
 };
 
 let vm: VMInstance;
-describe('hackatom', () => {
+describe('queue', () => {
   beforeEach(async () => {
     vm = new VMInstance(backend, 100_000_000_000_000) // TODO: implement gas limit on VM
     await vm.build(wasmBytecode);
