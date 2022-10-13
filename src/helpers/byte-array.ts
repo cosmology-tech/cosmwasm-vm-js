@@ -26,11 +26,22 @@ export function toNumber(byteArray: Uint8Array) {
   return parseInt(toHex(byteArray));
 }
 
-export function toByteArray(number: number): Uint8Array {
+export function toByteArray(number: number, fixedLength?: number | undefined): Uint8Array {
   let hex = number.toString(16);
   if (hex.length % 2 === 1) {
     hex = `0${hex}`;
   }
 
-  return fromHex(hex);
+  const bytesOriginal = fromHex(hex);
+
+  if (!fixedLength) {
+    return bytesOriginal;
+  }
+
+  let bytesFixedLength = [...bytesOriginal];
+  for (let i = 0; i < fixedLength - bytesOriginal.length; i++) {
+    bytesFixedLength = [0, ...bytesFixedLength];
+  }
+
+  return new Uint8Array(bytesFixedLength);
 }

@@ -58,7 +58,7 @@ describe('queue', () => {
     expect(parseBase64OkResponse(sumResponse)).toEqual({ sum: 0 });
   });
 
-  it.skip('push_and_query', () => {
+  it('push_and_query', () => {
     // Arrange
     vm.instantiate(mockEnv, mockInfo, {});
 

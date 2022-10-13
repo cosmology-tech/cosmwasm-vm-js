@@ -1,4 +1,4 @@
-import { toAscii, fromAscii } from '@cosmjs/encoding';
+import { toAscii } from '@cosmjs/encoding';
 import { createVM, writeData, writeObject } from './common/test-vm';
 import * as testData from './common/test-data';
 import {
@@ -8,7 +8,7 @@ import {
   Order,
   Region
 } from '../src';
-import { toNumber } from '../src/helpers/byte-array';
+import { toByteArray, toNumber } from '../src/helpers/byte-array';
 
 describe('do_db_read', () => {
   let vm: VMInstance;
@@ -837,10 +837,12 @@ function expectToBeKvp(
   expectedKey: Uint8Array,
   expectedValue: Uint8Array
 ) {
-  const json = JSON.parse(fromAscii(actualItem.data));
-  const key = new Uint8Array(Object.values(json.key));
-  const value = new Uint8Array(Object.values(json.value));
+  const expectedData = [
+    ...expectedKey,
+    ...toByteArray(expectedKey.length, 4),
+    ...expectedValue,
+    ...toByteArray(expectedValue.length, 4)
+  ];
 
-  expect(key).toStrictEqual(expectedKey);
-  expect(value).toStrictEqual(expectedValue);
+  expect([...actualItem.data]).toStrictEqual(expectedData);
 }

@@ -67,7 +67,7 @@ describe('burner', () => {
   // test verifies two things:
   // 1) remaining coins in storage (123456 gold) are sent to payout address
   // 2) storage is purged
-  it.skip('migrate_cleans_up_data', async () => {
+  it('migrate_cleans_up_data', async () => {
     // Arrange
     // TODO: VM instance w/ coin data & Bank module
     // const vm = new VMInstance(backend, [{ denom: 'gold', amount: '123456' }]);
@@ -88,8 +88,8 @@ describe('burner', () => {
     const res = vm.migrate(mockEnv, migrateMsg).json as any;
 
     // Assert
-    expect(res.messages.length).toStrictEqual(1);
-    expect(res.messages[0]).toBeDefined();
+    expect(res.ok.messages.length).toStrictEqual(1);
+    expect(res.ok.messages[0]).toBeDefined();
     // TODO: msg is SubMsg w/ BankMsg::Send to payout of all coins in contract
     iterId = storage.scan(null, null, Order.Ascending);
     cnt = storage.all(iterId);
