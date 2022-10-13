@@ -4,6 +4,7 @@ import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
 import { Env, MessageInfo } from 'types';
+import { toByteArray } from './helpers/byte-array';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -275,7 +276,13 @@ export class VMInstance {
       return this.allocate_none();
     }
 
-    return this.allocate_json(record);
+    return this.allocate_bytes(new Uint8Array(
+      [
+        ...record.key,
+        ...toByteArray(record.key.length, 4),
+        ...record.value,
+        ...toByteArray(record.value.length, 4)
+      ]));
   }
 
   do_addr_humanize(source: Region, destination: Region): Region {
