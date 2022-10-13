@@ -77,7 +77,7 @@ describe('cyberpunk', () => {
     expect(receivedEnv).toEqual(mockEnv);
 
     // Act 2
-    let data = wrapResult(vm.query(mockEnv, { mirror_env: {} })).unwrap();
+    const data = wrapResult(vm.query(mockEnv, { mirror_env: {} })).unwrap();
     receivedEnv = parseBase64Response(data);
     expect(receivedEnv).toEqual(mockEnv);
   });
