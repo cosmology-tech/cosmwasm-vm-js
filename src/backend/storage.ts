@@ -92,7 +92,7 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
   // Get next element of iterator with ID `iterator_id`.
   // Creates a region containing both key and value and returns its address.
   // Ownership of the result region is transferred to the contract.
-  // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value.
+  // The KV region uses the format value || valuelen || key || keylen, where valuelen and keylen are fixed-size big-endian u32 values.
   // An empty key (i.e. KV region ends with \0\0\0\0) means no more element, no matter what the value is.
   next(iterator_id: Uint8Array): Record | null {
     const iter = this.iterators.get(toNumber(iterator_id));
