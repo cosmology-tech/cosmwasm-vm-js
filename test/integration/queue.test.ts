@@ -10,11 +10,6 @@ import { Region } from '../../src/memory';
 import { expectResponseToBeOk, parseBase64Response } from '../common/test-vm';
 
 const wasmBytecode = readFileSync('testdata/v1.1/queue.wasm');
-const backend: IBackend = {
-  backend_api: new BasicBackendApi('terra'),
-  storage: new BasicKVIterStorage(),
-  querier: new BasicQuerier(),
-};
 
 const creator = 'creator';
 const mockContractAddr = 'cosmos2contract';
@@ -36,6 +31,12 @@ const mockInfo: { sender: string, funds: { amount: string, denom: string }[] } =
 let vm: VMInstance;
 describe('queue', () => {
   beforeEach(async () => {
+    const backend: IBackend = {
+      backend_api: new BasicBackendApi('terra'),
+      storage: new BasicKVIterStorage(),
+      querier: new BasicQuerier(),
+    };
+
     vm = new VMInstance(backend, 100_000_000_000_000) // TODO: implement gas limit on VM
     await vm.build(wasmBytecode);
   });
