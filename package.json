@@ -14,7 +14,8 @@
     "size": "size-limit",
     "test": "dts test",
     "lint": "dts lint",
-    "//degit:contracts": "cd contracts && npx degit CosmWasm/cosmwasm/contracts/hackatom#0.16 hackatom"
+    "//degit:contracts": "cd contracts && npx degit CosmWasm/cosmwasm/contracts/hackatom#0.16 hackatom",
+    "prepublishOnly": "npm run build"
   },
   "husky": {
     "hooks": {
@@ -40,9 +41,6 @@
       "limit": "10 KB"
     }
   ],
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
   "devDependencies": {
     "@babel/preset-typescript": "^7.16.7",
     "@size-limit/preset-small-lib": "^7.0.8",
