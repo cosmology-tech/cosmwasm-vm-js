@@ -101,12 +101,7 @@ export class Region {
    * @param str The string to write to the region
    */
   public write_str(str: string): void {
-    const bytes = new TextEncoder().encode(str);
-
-    let arr: number[] = [];
-    bytes.forEach(v => arr.push(v));
-    arr = [...arr, 0, 0, 0, 0, 0, 0, 0, 0]; // ToDo: how do we add the tail? packages/std/src/sections.rs:57
-    this.write(new Uint8Array(arr));
+    this.write(new TextEncoder().encode(str));
   }
 
   /**
