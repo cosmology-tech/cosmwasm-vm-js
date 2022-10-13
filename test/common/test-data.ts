@@ -46,7 +46,7 @@ export const ED25519_PUBKEY_HEX = fromHex(
 );
 
 export const SECP256K1_MESSAGE_HEX = fromHex('5c868fedb8026979ebd26f1ba07c27eedf4ff6d10443505a96ecaf21ba8c4f0937b3cd23ffdc3dd429d4cd1905fb8dbcceeff1350020e18b58d2ba70887baa3a9b783ad30d3fbf210331cdd7df8d77defa398cdacdfc2e359c7ba4cae46bb74401deb417f8b912a1aa966aeeba9c39c7dd22479ae2b30719dca2f2206c5eb4b7');
-export const ETHEREUM_MESSAGE = toAscii('connect all the things');
+export const ETHEREUM_MESSAGE = 'connect all the things';
 export const ETHEREUM_SIGNATURE_HEX = fromHex('dada130255a447ecf434a2df9193e6fbba663e4546c35c075cd6eea21d8c7cb1714b9b65a4f7f604ff6aad55fba73f8c36514a512bbbba03709b37069194f8a41b');
 export const ETHEREUM_SIGNER_ADDRESS = '0x12890D2cce102216644c59daE5baed380d84830c';
 export const ED25519_MESSAGE_HEX = fromHex('af82');

@@ -3,7 +3,7 @@ import { VMInstance } from "../../src/instance";
 import { BasicBackendApi, BasicKVIterStorage, BasicQuerier, IBackend, } from '../../src/backend';
 import * as testData from '../common/test-data';
 import { expectResponseToBeOk, parseBase64Response, wrapResult } from "../common/test-vm";
-import { fromHex } from "@cosmjs/encoding";
+import { fromHex, toHex } from "@cosmjs/encoding";
 
 const wasmBytecode = readFileSync('testdata/v1.1/crypto_verify.wasm');
 const backend: IBackend = {
@@ -31,6 +31,14 @@ const mockInfo: { sender: string, funds: { amount: string, denom: string }[] } =
 
 let vm: VMInstance;
 
+export function convertHexToBase64(hex: Uint8Array): string {
+  return Buffer.from(toHex(hex), 'hex').toString('base64');
+}
+
+export function convertStringToBase64(str: string): string {
+  return Buffer.from(str, "binary").toString('base64');
+}
+
 describe('crypto-verify', () => {
   beforeEach(async () => {
     vm = new VMInstance(backend);
@@ -55,13 +63,16 @@ describe('crypto-verify', () => {
 
     const verify_msg = {
       verify_cosmos_signature: {
-        message: testData.SECP256K1_MESSAGE_HEX,
-        signature: testData.ECDSA_SIG_HEX,
-        public_key: testData.ECDSA_PUBKEY_HEX,
+        message: convertHexToBase64(testData.SECP256K1_MESSAGE_HEX),
+        signature: convertHexToBase64(testData.ECDSA_SIG_HEX),
+        public_key: convertHexToBase64(testData.ECDSA_PUBKEY_HEX),
       }
     };
     const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
-    expectResponseToBeOk(raw);
+    const res = parseBase64Response(raw);
+    expect(res).toEqual({
+      verifies: true,
+    });
   });
 
   it('cosmos_signature_verify_fails', async () => {
@@ -71,13 +82,16 @@ describe('crypto-verify', () => {
     message[0] ^= 0x01;
     const verify_msg = {
       verify_cosmos_signature: {
-        message: message,
-        signature: testData.ECDSA_SIG_HEX,
-        public_key: testData.ECDSA_PUBKEY_HEX,
+        message: convertHexToBase64(message),
+        signature: convertHexToBase64(testData.ECDSA_SIG_HEX),
+        public_key: convertHexToBase64(testData.ECDSA_PUBKEY_HEX),
       }
     };
-    const raw = vm.query(mockEnv, verify_msg);
-    expectResponseToBeOk(raw);
+    const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
+    const res = parseBase64Response(raw);
+    expect(res).toEqual({
+      verifies: false,
+    });
   });
 
   it('cosmos_signature_verify_errors', async () => {
@@ -85,36 +99,39 @@ describe('crypto-verify', () => {
 
     const verify_msg = {
       verify_cosmos_signature: {
-        message: testData.SECP256K1_MESSAGE_HEX,
-        signature: testData.ECDSA_SIG_HEX,
-        public_key: [],
+        message: convertHexToBase64(testData.SECP256K1_MESSAGE_HEX),
+        signature: convertHexToBase64(testData.ECDSA_SIG_HEX),
+        public_key: convertHexToBase64(new Uint8Array(0)),
       }
     };
-    const raw = vm.query(mockEnv, verify_msg);
-    expectResponseToBeOk(raw);
+
+    try {
+      vm.query(mockEnv, verify_msg)
+    } catch (e: any) {
+      expect(e.message).toEqual('Expected public key to be an Uint8Array with length [33, 65]');
+    }
   });
 
   it('ethereum_signature_verify_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const verify_msg = {
-      verify_ethereum_signature: {
+      verify_ethereum_text: {
         message: testData.ETHEREUM_MESSAGE,
-        signature: testData.ETHEREUM_SIGNATURE_HEX,
-        public_key: testData.ETHEREUM_SIGNER_ADDRESS,
+        signature: convertHexToBase64(testData.ETHEREUM_SIGNATURE_HEX),
+        signer_address: testData.ETHEREUM_SIGNER_ADDRESS,
       }
     };
     const raw = vm.query(mockEnv, verify_msg);
-    expectResponseToBeOk(raw);
+    console.log(raw.json);
   });
 
   it('ethereum_signature_verify_fails_for_corrupted_message', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const message = testData.ETHEREUM_MESSAGE;
-    message[0] ^= 0x01;
     const verify_msg = {
-      verify_ethereum_signature: {
+      verify_ethereum_text: {
         message: message,
         signature: testData.ETHEREUM_SIGNATURE_HEX,
         public_key: testData.ETHEREUM_SIGNER_ADDRESS,
@@ -131,7 +148,7 @@ describe('crypto-verify', () => {
     const signature = testData.ETHEREUM_SIGNATURE_HEX;
     signature[5] ^= 0x01;
     const verify_msg = {
-      verify_ethereum_signature: {
+      verify_ethereum_text: {
         message: testData.ETHEREUM_MESSAGE,
         signature: signature,
         public_key: testData.ETHEREUM_SIGNER_ADDRESS,
@@ -153,7 +170,7 @@ describe('crypto-verify', () => {
     expectResponseToBeOk(raw2);
   });
 
-  it('tendermint_signature_verify_works', async () => {
+  it('verify_ethereum_transaction_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
     const nonce = 0xe1;
     const chain_id = 4;
@@ -187,6 +204,24 @@ describe('crypto-verify', () => {
     expectResponseToBeOk(raw);
   });
 
+  it('tendermint_signature_verify_works', async () => {
+    vm.instantiate(mockEnv, mockInfo, {});
+
+    const verify_msg = {
+      verify_tendermint_signature: {
+        message: convertHexToBase64(testData.ED25519_MESSAGE_HEX),
+        signature: convertHexToBase64(testData.ED25519_SIGNATURE_HEX),
+        public_key: convertHexToBase64(testData.ED25519_PUBLIC_KEY_HEX),
+      }
+    };
+
+    const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
+    const res = parseBase64Response(raw);
+    expect(res).toEqual({
+      verifies: true,
+    });
+  });
+
   it('tendermint_signature_verify_fails', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
@@ -194,51 +229,63 @@ describe('crypto-verify', () => {
     message[0] ^= 0x01;
 
     const verify_msg = {
-      verify_tenmdermint_signature: {
-        message: message,
-        signature: testData.ED25519_SIGNATURE_HEX,
-        public_key: testData.ED25519_PUBLIC_KEY_HEX,
+      verify_tendermint_signature: {
+        message: convertHexToBase64(message),
+        signature: convertHexToBase64(testData.ED25519_SIGNATURE_HEX),
+        public_key: convertHexToBase64(testData.ED25519_PUBLIC_KEY_HEX),
       }
     };
 
-    const raw = vm.query(mockEnv, verify_msg);
+    const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
+    const res = parseBase64Response(raw);
+    expect(res).toEqual({
+      verifies: false,
+    });
   });
 
   it('tendermint_signature_verify_errors', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const verify_msg = {
-      verify_tenmdermint_signature: {
-        message: testData.ED25519_MESSAGE_HEX,
-        signature: testData.ED25519_SIGNATURE_HEX,
-        public_key: new Uint8Array(0),
+      verify_tendermint_signature: {
+        message: convertHexToBase64(testData.ED25519_MESSAGE_HEX),
+        signature: convertHexToBase64(testData.ED25519_SIGNATURE_HEX),
+        public_key: convertHexToBase64(new Uint8Array(0)),
       }
     };
 
-    const raw = vm.query(mockEnv, verify_msg);
+    const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
+    const res = parseBase64Response(raw);
+    expect(res).toEqual({
+      verifies: false,
+    });
   });
 
   it('tendermint_signatures_batch_verify_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const verify_msg = {
-      verify_tenmdermint_batch: {
+      verify_tendermint_batch: {
         messages: [
-          testData.ED25519_MESSAGE_HEX,
-          testData.ED25519_MESSAGE2_HEX,
+          convertHexToBase64(testData.ED25519_MESSAGE_HEX),
+          convertHexToBase64(testData.ED25519_MESSAGE2_HEX),
         ],
         signatures: [
-          testData.ED25519_SIGNATURE_HEX,
-          testData.ED25519_SIGNATURE2_HEX,
+          convertHexToBase64(testData.ED25519_SIGNATURE_HEX),
+          convertHexToBase64(testData.ED25519_SIGNATURE2_HEX),
         ],
         public_keys: [
-          testData.ED25519_PUBLIC_KEY_HEX,
-          testData.ED25519_PUBLIC_KEY2_HEX,
+          convertHexToBase64(testData.ED25519_PUBLIC_KEY_HEX),
+          convertHexToBase64(testData.ED25519_PUBLIC_KEY2_HEX),
         ],
       }
     };
 
-    const raw = vm.query(mockEnv, verify_msg);
+    const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
+    const res = parseBase64Response(raw);
+    expect(res).toEqual({
+      verifies: false,
+    });
   });
 
   it('tendermint_signatures_batch_verify_message_multisig_works', async () => {
@@ -314,23 +361,24 @@ describe('crypto-verify', () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const verify_msg = {
-      verify_tenmdermint_batch: {
+      verify_tendermint_batch: {
         messages: [
-          testData.ED25519_MESSAGE_HEX,
-          testData.ED25519_MESSAGE2_HEX,
+          convertHexToBase64(testData.ED25519_MESSAGE_HEX),
+          convertHexToBase64(testData.ED25519_MESSAGE2_HEX),
         ],
         signatures: [
-          testData.ED25519_SIGNATURE_HEX,
-          testData.ED25519_SIGNATURE2_HEX,
+          convertHexToBase64(testData.ED25519_SIGNATURE_HEX),
+          convertHexToBase64(testData.ED25519_SIGNATURE2_HEX),
         ],
         public_keys: [
-          testData.ED25519_PUBLIC_KEY_HEX,
-          ""
+          convertHexToBase64(testData.ED25519_PUBLIC_KEY_HEX),
+          convertHexToBase64(fromHex(""))
         ],
       }
     };
 
     const raw = vm.query(mockEnv, verify_msg);
+    console.log(raw);
   });
 
   it('query_works', async () => {
