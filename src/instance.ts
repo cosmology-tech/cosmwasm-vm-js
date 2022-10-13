@@ -3,7 +3,6 @@ import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
-import { toByteArray } from './helpers/byte-array';
 import { Env, MessageInfo } from 'types';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
@@ -87,6 +86,11 @@ export class VMInstance {
     let region = this.allocate(JSON.stringify(obj).length);
     region.write_json(obj);
     return region;
+  }
+
+  public allocate_none(): Region {
+    const none = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0]);
+    return this.allocate_bytes(none);
   }
 
   public instantiate(env: Env, info: MessageInfo, msg: object): Region {
@@ -214,10 +218,9 @@ export class VMInstance {
     return this.do_query_chain(request).ptr;
   }
 
-  abort(message_ptr: number, file_ptr: number, line: number, column: number) {
+  abort(message_ptr: number) {
     let message = this.region(message_ptr);
-    let file = this.region(file_ptr);
-    this.do_abort(message, file, line, column);
+    this.do_abort(message);
   }
 
   public region(ptr: number): Region {
@@ -225,22 +228,18 @@ export class VMInstance {
   }
 
   do_db_read(key: Region): Region {
-    let value = this.backend.storage.get(key.data);
-    let result: Region;
+    let value: Uint8Array | null = this.backend.storage.get(key.data);
 
     if (key.str.length > MAX_LENGTH_DB_KEY) {
-      throw new Error(
-        `Key length ${key.str.length} exceeds maximum length ${MAX_LENGTH_DB_KEY}`
-      );
+      throw new Error(`Key length ${key.str.length} exceeds maximum length ${MAX_LENGTH_DB_KEY}`);
     }
 
     if (value === null) {
-      console.log(`db_read: key not found: ${key.str}`);
-      result = this.region(0);
-    } else {
-      result = this.allocate_bytes(value);
+      console.warn(`db_read: key not found: ${key.str}`);
+      return this.allocate_none();
     }
-    return result;
+
+    return this.allocate_bytes(value);
   }
 
   do_db_write(key: Region, value: Region) {
@@ -261,21 +260,22 @@ export class VMInstance {
   }
 
   do_db_scan(start: Region, end: Region, order: number): Region {
-    const iterIdBytes = this.backend.storage.scan(start.data, end.data, order);
-    let region = this.allocate(iterIdBytes.length);
-    region.write(iterIdBytes);
+    const iteratorId: Uint8Array = this.backend.storage.scan(start.data, end.data, order);
+
+    let region = this.allocate(iteratorId.length);
+    region.write(iteratorId);
+
     return region;
   }
 
   do_db_next(iterator_id: Region): Region {
     const record: Record | null = this.backend.storage.next(iterator_id.data);
-    let result;
+
     if (record === null) {
-      result = this.region(0);
-    } else {
-      result = this.allocate_json(record);
+      return this.allocate_none();
     }
-    return result;
+
+    return this.allocate_json(record);
   }
 
   do_addr_humanize(source: Region, destination: Region): Region {
@@ -433,9 +433,7 @@ export class VMInstance {
     return region;
   }
 
-  do_abort(message: Region, file: Region, line: number, column: number) {
-    throw new Error(
-      `abort: ${message.read_str()} at ${file.read_str()}:${line}:${column}`
-    );
+  do_abort(message: Region) {
+    throw new Error(`abort: ${message.read_str()}`);
   }
 }
