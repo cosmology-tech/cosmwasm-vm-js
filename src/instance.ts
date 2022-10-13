@@ -56,7 +56,7 @@ export class VMInstance {
 
   public allocate(size: number): Region {
     let { allocate, memory } = this.exports;
-    let regPtr = allocate(size);
+    let regPtr = allocate(size + 8);
     return new Region(memory, regPtr);
   }
 

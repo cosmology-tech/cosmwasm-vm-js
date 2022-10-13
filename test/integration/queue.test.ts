@@ -43,18 +43,34 @@ describe('queue', () => {
   it('instantiate_and_query', async () => {
     // Arrange
     const instantiateResponse = vm.instantiate(mockEnv, mockInfo, {});
-    expect((instantiateResponse.json as any).ok.messages.length).toBe(0);
 
     // Act
     const countResponse = vm.query(mockEnv, { count: {} });
     const sumResponse = vm.query(mockEnv, { sum: {} });
 
     // Assert
+    expect((instantiateResponse.json as any).ok.messages.length).toBe(0);
+
     expectResponseToBeOk(countResponse);
     expect(parseBase64OkResponse(countResponse)).toEqual({ count: 0 });
 
     expectResponseToBeOk(sumResponse);
     expect(parseBase64OkResponse(sumResponse)).toEqual({ sum: 0 });
+  });
+
+  it.skip('push_and_query', () => {
+    // Arrange
+    vm.instantiate(mockEnv, mockInfo, {});
+
+    // Act
+    vm.execute(mockEnv, mockInfo, { enqueue: { value: 25 } });
+
+    // Assert
+    const countResponse = vm.query(mockEnv, { count: {} });
+    expect(parseBase64OkResponse(countResponse)).toEqual({ count: 1 });
+
+    const sumResponse = vm.query(mockEnv, { sum: {} });
+    expect(parseBase64OkResponse(sumResponse)).toEqual({ sum: 25 });
   });
 });
 
