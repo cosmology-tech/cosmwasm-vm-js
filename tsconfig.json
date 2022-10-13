@@ -43,5 +43,9 @@
       ]
     }
   },
-  "typeAcquisition": { "include": ["jest"] }
+  "typeAcquisition": {
+    "include": [
+      "jest"
+    ]
+  }
 }
