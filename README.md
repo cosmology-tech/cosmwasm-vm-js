@@ -17,20 +17,20 @@ should be verified against the original implementation for critical use-cases.
 Add the `cosmwasm-vm-js` package as a dependency in your `package.json`.
 
 ```sh
-npm install -S cosmwasm-vm
+npm install -S @terran-one/cosmwasm-vm
 ```
 
 or
 
 ```sh
-yarn add cosmwasm-vm-js
+yarn add @terran-one/cosmwasm-vm-js
 ```
 
 ## Usage
 
 ```ts
 import { readFileSync } from 'fs';
-import { VMInstance } from 'cosmwasm-vm-js';
+import { VMInstance } from '@terran-one/cosmwasm-vm-js';
 import {
   BasicBackendApi,
   BasicKVIterStorage,
