@@ -4,7 +4,8 @@ import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
 import { Env, MessageInfo } from 'types';
-import { toByteArray } from './helpers/byte-array';
+import { toByteArray, toNumber } from './helpers/byte-array';
+import { fromAscii, fromBase64, fromBech32, fromHex } from '@cosmjs/encoding';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -393,38 +394,57 @@ export class VMInstance {
   // using the ed25519 EdDSA scheme.
   // Returns 0 on verification success (all batches verify correctly), 1 on verification failure
   do_ed25519_batch_verify(
-    messages: Region,
-    signatures: Region,
-    public_keys: Region
+    messages_ptr: Region,
+    signatures_ptr: Region,
+    public_keys_ptr: Region
   ): number {
-    const messagesData = JSON.parse(messages.str);
-    const signatureData = JSON.parse(signatures.str);
-    const pubKeyData = JSON.parse(public_keys.str);
-    if (
-      messagesData.length !== signatureData.length ||
-      messagesData.length !== pubKeyData.length
-    ) {
-      throw new Error(
-        'Lengths of messages, signatures and public keys do not match.'
-      );
+    let messages = decodeSections(messages_ptr.data);
+    let signatures = decodeSections(signatures_ptr.data);
+    let publicKeys = decodeSections(public_keys_ptr.data);
+
+    if (messages.length === signatures.length && messages.length === publicKeys.length) {
+      // Do nothing, we're good to go
+    } else if (messages.length === 1 && signatures.length == publicKeys.length) {
+      const repeated = [];
+      for (let i = 0; i < signatures.length; i++) {
+        repeated.push(...messages);
+      }
+      messages = repeated;
+    } else if (publicKeys.length === 1 && messages.length == signatures.length) {
+      const repeated = [];
+      for (let i = 0; i < messages.length; i++) {
+        repeated.push(...publicKeys);
+      }
+      publicKeys = repeated;
+    } else {
+      throw new Error('Lengths of messages, signatures and public keys do not match.');
     }
 
-    for (let i = 0; i < messagesData.length; i++) {
-      const msg = Uint8Array.from(Object.values(messagesData[i]));
-      const sig = Uint8Array.from(Object.values(signatureData[i]));
-      const pub = Uint8Array.from(Object.values(pubKeyData[i]));
-      const _sig = Buffer.from(sig).toString('hex');
-      const _pub = Buffer.from(pub).toString('hex');
-      const _msg = Buffer.from(msg).toString('hex');
-      const _signature = global.eddsa().makeSignature(_sig);
-      const _pubkey = global.eddsa().keyFromPublic(_pub);
+    if (messages.length !== signatures.length || messages.length !== publicKeys.length) {
+      throw new Error('Lengths of messages, signatures and public keys do not match.');
+    }
 
-      const isValidSignature = global.eddsa().verify(_msg, _signature, _pubkey);
+    for (let i = 0; i < messages.length; i++) {
+      const message = Buffer.from(messages[i]).toString('hex');
+      const signature = Buffer.from(signatures[i]).toString('hex');
+      const publicKey = Buffer.from(publicKeys[i]).toString('hex');
 
-      if (!isValidSignature) {
+      const _signature = global.eddsa().makeSignature(signature);
+      const _publicKey = global.eddsa().keyFromPublic(publicKey);
+
+      let isValid: boolean;
+      try {
+        isValid = global.eddsa().verify(message, _signature, _publicKey);
+      } catch (e) {
+        console.log(e);
+        return 1;
+      }
+
+      if (!isValid) {
         return 1;
       }
     }
+
     return 0;
   }
 
@@ -443,4 +463,38 @@ export class VMInstance {
   do_abort(message: Region) {
     throw new Error(`abort: ${message.read_str()}`);
   }
+}
+
+function decodeSections(data: Uint8Array | number[]): (number[] | Uint8Array)[] {
+  let result: (number[] | Uint8Array)[] = [];
+  let remainingLen = data.length;
+
+  console.log(data.length)
+
+  while (remainingLen >= 4) {
+    const tailLen = fromBigEndianBytes([
+      data[remainingLen - 4],
+      data[remainingLen - 3],
+      data[remainingLen - 2],
+      data[remainingLen - 1],
+    ]);
+
+    const section = data.slice(remainingLen - 4 - tailLen, remainingLen - 4);
+    console.log(section)
+    result.push(section);
+
+    remainingLen -= 4 + tailLen;
+  }
+
+  result.reverse();
+  console.log(result)
+  return result;
+}
+
+function fromBigEndianBytes(array: Uint8Array | number[]) {
+  let value = 0;
+  for (let i = 0; i < array.length; i++) {
+      value = (value * 256) + array[i];
+  }
+  return value;
 }

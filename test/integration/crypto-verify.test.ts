@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs';
+import { eddsa } from 'elliptic';
 import { VMInstance } from "../../src/instance";
 import { BasicBackendApi, BasicKVIterStorage, BasicQuerier, IBackend, } from '../../src/backend';
 import * as testData from '../common/test-data';
@@ -6,11 +7,6 @@ import { expectResponseToBeOk, parseBase64Response, wrapResult } from "../common
 import { fromHex, toHex } from "@cosmjs/encoding";
 
 const wasmBytecode = readFileSync('testdata/v1.1/crypto_verify.wasm');
-const backend: IBackend = {
-  backend_api: new BasicBackendApi('terra'),
-  storage: new BasicKVIterStorage(),
-  querier: new BasicQuerier(),
-};
 
 const creator = 'creator';
 const mockContractAddr = 'cosmos2contract';
@@ -41,6 +37,12 @@ export function convertStringToBase64(str: string): string {
 
 describe('crypto-verify', () => {
   beforeEach(async () => {
+    const backend: IBackend = {
+      backend_api: new BasicBackendApi('terra'),
+      storage: new BasicKVIterStorage(),
+      querier: new BasicQuerier(),
+    };
+
     vm = new VMInstance(backend);
     await vm.build(wasmBytecode);
   });
@@ -223,7 +225,7 @@ describe('crypto-verify', () => {
     });
   });
 
-  it('tendermint_signature_verify_fails', async () => {
+  it.only('tendermint_signature_verify_fails', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const message = testData.ED25519_MESSAGE_HEX;
@@ -262,7 +264,7 @@ describe('crypto-verify', () => {
     });
   });
 
-  it.skip('tendermint_signatures_batch_verify_works', async () => {
+  it.only('tendermint_signatures_batch_verify_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const verifyMsg = {
@@ -290,21 +292,21 @@ describe('crypto-verify', () => {
     });
   });
 
-  it.skip('tendermint_signatures_batch_verify_message_multisig_works', async () => {
+  it('tendermint_signatures_batch_verify_message_multisig_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const verifyMsg = {
       verify_tendermint_batch: {
         messages: [
-          testData.ED25519_MESSAGE_HEX,
+          convertHexToBase64(testData.ED25519_MESSAGE_HEX),
         ],
         signatures: [
-          testData.ED25519_SIGNATURE_HEX,
-          testData.ED25519_SIGNATURE_HEX,
+          convertHexToBase64(testData.ED25519_SIGNATURE_HEX),
+          convertHexToBase64(testData.ED25519_SIGNATURE_HEX),
         ],
         public_keys: [
-          testData.ED25519_PUBLIC_KEY_HEX,
-          testData.ED25519_PUBLIC_KEY_HEX,
+          convertHexToBase64(testData.ED25519_PUBLIC_KEY_HEX),
+          convertHexToBase64(testData.ED25519_PUBLIC_KEY_HEX),
         ],
       }
     };
@@ -317,21 +319,21 @@ describe('crypto-verify', () => {
     });
   });
 
-  it.skip('tendermint_signatures_batch_verify_single_public_key_works', async () => {
+  it('tendermint_signatures_batch_verify_single_public_key_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const verify_msg = {
       verify_tenmdermint_batch: {
         messages: [
-          testData.ED25519_MESSAGE_HEX,
-          testData.ED25519_MESSAGE_HEX,
+          convertHexToBase64(testData.ED25519_MESSAGE_HEX),
+          convertHexToBase64(testData.ED25519_MESSAGE_HEX),
         ],
         signatures: [
-          testData.ED25519_SIGNATURE_HEX,
-          testData.ED25519_SIGNATURE_HEX,
+          convertHexToBase64(testData.ED25519_SIGNATURE_HEX),
+          convertHexToBase64(testData.ED25519_SIGNATURE_HEX),
         ],
         public_keys: [
-          testData.ED25519_PUBLIC_KEY_HEX,
+          convertHexToBase64(testData.ED25519_PUBLIC_KEY_HEX),
         ],
       }
     };
@@ -343,7 +345,7 @@ describe('crypto-verify', () => {
     });
   });
 
-  it.skip('tendermint_signatures_batch_verify_fails', async () => {
+  it('tendermint_signatures_batch_verify_fails', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
     const messages = [
       testData.ED25519_MESSAGE_HEX,
@@ -355,12 +357,12 @@ describe('crypto-verify', () => {
       verify_tenmdermint_batch: {
         messages: messages,
         signatures: [
-          testData.ED25519_SIGNATURE_HEX,
-          testData.ED25519_SIGNATURE2_HEX,
+          convertHexToBase64(testData.ED25519_SIGNATURE_HEX),
+          convertHexToBase64(testData.ED25519_SIGNATURE2_HEX),
         ],
         public_keys: [
-          testData.ED25519_PUBLIC_KEY_HEX,
-          testData.ED25519_PUBLIC_KEY2_HEX,
+          convertHexToBase64(testData.ED25519_PUBLIC_KEY_HEX),
+          convertHexToBase64(testData.ED25519_PUBLIC_KEY2_HEX),
         ],
       }
     };
@@ -372,7 +374,7 @@ describe('crypto-verify', () => {
     });
   });
 
-  it.skip('tendermint_signatures_batch_verify_errors', async () => {
+  it('tendermint_signatures_batch_verify_errors', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const verifyMsg = {
