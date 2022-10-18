@@ -122,6 +122,13 @@ export class VMInstance {
     return this.region(result);
   }
 
+  public reply(env: Env, msg: object): Region {
+    let { reply } = this.exports;
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    let result = reply(...args);
+    return this.region(result);
+  }
+
   db_read(key_ptr: number): number {
     let key = this.region(key_ptr);
     return this.do_db_read(key).ptr;

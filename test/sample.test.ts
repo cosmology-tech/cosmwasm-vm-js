@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { VMInstance } from "../src/instance";
+import { VMInstance } from '../src/instance';
 import {
   BasicBackendApi,
   BasicKVIterStorage,

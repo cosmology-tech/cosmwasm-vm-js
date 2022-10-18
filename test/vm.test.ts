@@ -5,6 +5,7 @@ import { writeData } from './common/test-vm';
 import * as testData from './common/test-data';
 
 const wasmByteCode = readFileSync('testdata/v1.0/cosmwasm_vm_test.wasm');
+const cwMachineBytecode = readFileSync('testdata/v1.0/cw_machine-aarch64.wasm');
 const backend: IBackend = {
   backend_api: new BasicBackendApi('terra'),
   storage: new BasicKVIterStorage(),
@@ -65,6 +66,33 @@ describe('CosmWasmVM', () => {
       },
     };
     expect(region.json).toEqual(actual);
+  });
+
+  it('reply', async () => {
+    await vm.build(cwMachineBytecode);
+
+    let region = vm.instantiate(mockEnv, mockInfo, {});
+    region = vm.reply(mockEnv, {
+      id: 1,
+      result: {
+        ok: {
+          events: [{ type: 'wasm', attributes: [{ key: 'k', value: 'v' }] }],
+          data: null,
+        },
+      },
+    });
+    expect('ok' in region.json).toBeTruthy();
+
+    region = vm.reply(mockEnv, {
+      id: 2,
+      result: {
+        ok: {
+          events: [{ type: 'wasm', attributes: [{ key: 'k', value: 'v' }] }],
+          data: null,
+        },
+      },
+    });
+    expect('error' in region.json).toBeTruthy();
   });
 
   it('serializes', async () => {
