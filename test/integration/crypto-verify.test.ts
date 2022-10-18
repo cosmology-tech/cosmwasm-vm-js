@@ -265,7 +265,7 @@ describe('crypto-verify', () => {
   it.skip('tendermint_signatures_batch_verify_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
-    const verify_msg = {
+    const verifyMsg = {
       verify_tendermint_batch: {
         messages: [
           convertHexToBase64(testData.ED25519_MESSAGE_HEX),
@@ -282,7 +282,8 @@ describe('crypto-verify', () => {
       }
     };
 
-    const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
+    const queryResult = vm.query(mockEnv, verifyMsg);
+    const raw = wrapResult(queryResult).unwrap();
     const res = parseBase64Response(raw);
     expect(res).toEqual({
       verifies: true,
@@ -292,8 +293,8 @@ describe('crypto-verify', () => {
   it.skip('tendermint_signatures_batch_verify_message_multisig_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
-    const verify_msg = {
-      verify_tenmdermint_batch: {
+    const verifyMsg = {
+      verify_tendermint_batch: {
         messages: [
           testData.ED25519_MESSAGE_HEX,
         ],
@@ -308,7 +309,8 @@ describe('crypto-verify', () => {
       }
     };
 
-    const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
+    const queryResult = vm.query(mockEnv, verifyMsg);
+    const raw = wrapResult(queryResult).unwrap();
     const res = parseBase64Response(raw);
     expect(res).toEqual({
       verifies: true,
@@ -373,7 +375,7 @@ describe('crypto-verify', () => {
   it.skip('tendermint_signatures_batch_verify_errors', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
-    const verify_msg = {
+    const verifyMsg = {
       verify_tendermint_batch: {
         messages: [
           convertHexToBase64(testData.ED25519_MESSAGE_HEX),
@@ -390,7 +392,8 @@ describe('crypto-verify', () => {
       }
     };
 
-    const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
+    const queryResult = vm.query(mockEnv, verifyMsg);
+    const raw = wrapResult(queryResult).unwrap();
     const res = parseBase64Response(raw);
     expect(res).toEqual({
       verifies: false,
