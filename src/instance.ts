@@ -4,8 +4,7 @@ import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
 import { Env, MessageInfo } from 'types';
-import { toByteArray, toNumber } from './helpers/byte-array';
-import { fromAscii, fromBase64, fromBech32, fromHex } from '@cosmjs/encoding';
+import { toByteArray } from './helpers/byte-array';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -469,8 +468,6 @@ function decodeSections(data: Uint8Array | number[]): (number[] | Uint8Array)[] 
   let result: (number[] | Uint8Array)[] = [];
   let remainingLen = data.length;
 
-  console.log(data.length)
-
   while (remainingLen >= 4) {
     const tailLen = fromBigEndianBytes([
       data[remainingLen - 4],
@@ -480,14 +477,12 @@ function decodeSections(data: Uint8Array | number[]): (number[] | Uint8Array)[] 
     ]);
 
     const section = data.slice(remainingLen - 4 - tailLen, remainingLen - 4);
-    console.log(section)
     result.push(section);
 
     remainingLen -= 4 + tailLen;
   }
 
   result.reverse();
-  console.log(result)
   return result;
 }
 

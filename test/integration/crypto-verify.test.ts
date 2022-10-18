@@ -1,5 +1,4 @@
 import { readFileSync } from 'fs';
-import { eddsa } from 'elliptic';
 import { VMInstance } from "../../src/instance";
 import { BasicBackendApi, BasicKVIterStorage, BasicQuerier, IBackend, } from '../../src/backend';
 import * as testData from '../common/test-data';
@@ -225,7 +224,7 @@ describe('crypto-verify', () => {
     });
   });
 
-  it.only('tendermint_signature_verify_fails', async () => {
+  it.skip('tendermint_signature_verify_fails', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const message = testData.ED25519_MESSAGE_HEX;
@@ -264,7 +263,7 @@ describe('crypto-verify', () => {
     });
   });
 
-  it.only('tendermint_signatures_batch_verify_works', async () => {
+  it('tendermint_signatures_batch_verify_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const verifyMsg = {
@@ -319,7 +318,7 @@ describe('crypto-verify', () => {
     });
   });
 
-  it('tendermint_signatures_batch_verify_single_public_key_works', async () => {
+  it.skip('tendermint_signatures_batch_verify_single_public_key_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const verify_msg = {
@@ -345,7 +344,7 @@ describe('crypto-verify', () => {
     });
   });
 
-  it('tendermint_signatures_batch_verify_fails', async () => {
+  it.skip('tendermint_signatures_batch_verify_fails', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
     const messages = [
       testData.ED25519_MESSAGE_HEX,
