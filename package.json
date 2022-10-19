@@ -1,6 +1,6 @@
 {
   "name": "@terran-one/cosmwasm-vm-js",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "license": "MIT",
   "author": "TerranOne",
   "main": "dist/index.js",
@@ -9,6 +9,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
   "scripts": {
     "build": "tsc --module commonjs && webpack --mode production",
     "size": "size-limit",
