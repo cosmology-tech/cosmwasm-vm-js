@@ -1,5 +1,5 @@
 import { toAscii } from '@cosmjs/encoding';
-import { createVM, writeData, writeObject } from './common/test-vm';
+import { createVM, writeData } from './common/test-vm';
 import * as testData from './common/test-data';
 import {
   VMInstance,
@@ -661,38 +661,6 @@ describe('do_ed25519_verify', () => {
     } catch (e) {
       expect(e).toEqual(new Error('Assertion failed'));
     }
-  });
-});
-
-describe('do_ed25519_batch_verify', () => {
-  let vm: VMInstance;
-  beforeEach(async () => {
-    vm = await createVM();
-  });
-
-  it('works', () => {
-    const hashPtr = writeObject(vm, [testData.ED25519_MSG_HEX]);
-    const sigPtr = writeObject(vm, [testData.ED25519_SIG_HEX]);
-    const pubkeyPtr = writeObject(vm, [testData.ED25519_PUBKEY_HEX]);
-    const result = vm.do_ed25519_batch_verify(hashPtr, sigPtr, pubkeyPtr);
-    expect(result).toEqual(0);
-  });
-
-  it('fails for wrong msg', () => {
-    const msg = new Uint8Array([...testData.ED25519_MSG_HEX, 0x01]);
-    const hashPtr = writeObject(vm, [msg]);
-    const sigPtr = writeObject(vm, [testData.ED25519_SIG_HEX]);
-    const pubkeyPtr = writeObject(vm, [testData.ED25519_PUBKEY_HEX]);
-    const result = vm.do_ed25519_batch_verify(hashPtr, sigPtr, pubkeyPtr);
-    expect(result).toEqual(1);
-  });
-
-  it('fails for invalid pubkey', () => {
-    const hashPtr = writeObject(vm, [testData.ED25519_MSG_HEX]);
-    const sigPtr = writeObject(vm, [testData.ED25519_SIG_HEX]);
-    const pubkeyPtr = writeObject(vm, [new Uint8Array(0)]);
-    const result = vm.do_ed25519_batch_verify(hashPtr, sigPtr, pubkeyPtr);
-    expect(result).toEqual(1);
   });
 });
 
