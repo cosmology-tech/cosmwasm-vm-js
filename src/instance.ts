@@ -189,7 +189,7 @@ export class VMInstance {
     hash_ptr: number,
     signature_ptr: number,
     recover_param: number
-  ): Uint8Array {
+  ): BigInt {
     let hash = this.region(hash_ptr);
     let signature = this.region(signature_ptr);
     return this.do_secp256k1_recover_pubkey(hash, signature, recover_param);
@@ -371,8 +371,9 @@ export class VMInstance {
     msgHash: Region,
     signature: Region,
     recover_param: number
-  ): Uint8Array {
-    return secp256k1Recover(msgHash.data, signature.data, recover_param);
+  ): BigInt {
+    const test = secp256k1Recover(msgHash.data, signature.data, recover_param);
+    return convertU8aToBigInt(test);
   }
 
   // Verifies a message against a signature with a public key, using the ed25519 EdDSA scheme.
@@ -500,4 +501,17 @@ function fromBigEndianBytes(array: Uint8Array | number[]): number {
       value = (value * 256) + array[i];
   }
   return value;
+}
+
+function convertU8aToBigInt(u8a: Uint8Array): BigInt {
+  let bits = 8n;
+  if (ArrayBuffer.isView(u8a)) bits = BigInt(u8a.BYTES_PER_ELEMENT * 8)
+  else u8a = new Uint8Array(u8a)
+
+  let ret = 0n;
+  for (const i of (u8a as Buffer).values()) {
+    const bi = BigInt(i)
+    ret = (ret << bits) + bi
+  }
+  return ret
 }
