@@ -322,11 +322,11 @@ describe('crypto-verify', () => {
     });
   });
 
-  it.skip('tendermint_signatures_batch_verify_single_public_key_works', async () => {
+  it('tendermint_signatures_batch_verify_single_public_key_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const verifyMsg = {
-      verify_tenmdermint_batch: {
+      verify_tendermint_batch: {
         messages: [
           convertHexToBase64(testData.ED25519_MESSAGE_HEX),
           convertHexToBase64(testData.ED25519_MESSAGE_HEX),
@@ -347,7 +347,7 @@ describe('crypto-verify', () => {
     const raw = wrapResult(queryResult).unwrap();
     const res = parseBase64Response(raw);
     expect(res).toEqual({
-      verifies: false,
+      verifies: true,
     });
   });
 
@@ -360,7 +360,7 @@ describe('crypto-verify', () => {
 
     messages[1][0] ^= 0x01;
     const verify_msg = {
-      verify_tenmdermint_batch: {
+      verify_tendermint_batch: {
         messages: messages,
         signatures: [
           convertHexToBase64(testData.ED25519_SIGNATURE_HEX),
