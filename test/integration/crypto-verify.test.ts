@@ -284,6 +284,8 @@ describe('crypto-verify', () => {
     };
 
     const queryResult = vm.query(mockEnv, verifyMsg);
+    expect((queryResult.json as any).error).not.toBeDefined();
+
     const raw = wrapResult(queryResult).unwrap();
     const res = parseBase64Response(raw);
     expect(res).toEqual({
@@ -311,6 +313,8 @@ describe('crypto-verify', () => {
     };
 
     const queryResult = vm.query(mockEnv, verifyMsg);
+    expect((queryResult.json as any).error).not.toBeDefined();
+
     const raw = wrapResult(queryResult).unwrap();
     const res = parseBase64Response(raw);
     expect(res).toEqual({
@@ -321,7 +325,7 @@ describe('crypto-verify', () => {
   it.skip('tendermint_signatures_batch_verify_single_public_key_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
-    const verify_msg = {
+    const verifyMsg = {
       verify_tenmdermint_batch: {
         messages: [
           convertHexToBase64(testData.ED25519_MESSAGE_HEX),
@@ -337,7 +341,10 @@ describe('crypto-verify', () => {
       }
     };
 
-    const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
+    const queryResult = vm.query(mockEnv, verifyMsg);
+    expect((queryResult.json as any).error).not.toBeDefined();
+
+    const raw = wrapResult(queryResult).unwrap();
     const res = parseBase64Response(raw);
     expect(res).toEqual({
       verifies: false,
@@ -394,6 +401,8 @@ describe('crypto-verify', () => {
     };
 
     const queryResult = vm.query(mockEnv, verifyMsg);
+    expect((queryResult.json as any).error).not.toBeDefined();
+
     const raw = wrapResult(queryResult).unwrap();
     const res = parseBase64Response(raw);
     expect(res).toEqual({
