@@ -351,17 +351,17 @@ describe('crypto-verify', () => {
     });
   });
 
-  it.skip('tendermint_signatures_batch_verify_fails', async () => {
+  it('tendermint_signatures_batch_verify_fails', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
     const messages = [
       testData.ED25519_MESSAGE_HEX,
       testData.ED25519_MESSAGE2_HEX,
     ];
-
     messages[1][0] ^= 0x01;
-    const verify_msg = {
+
+    const verifyMsg = {
       verify_tendermint_batch: {
-        messages: messages,
+        messages: messages.map(m => convertHexToBase64(m)),
         signatures: [
           convertHexToBase64(testData.ED25519_SIGNATURE_HEX),
           convertHexToBase64(testData.ED25519_SIGNATURE2_HEX),
@@ -373,7 +373,10 @@ describe('crypto-verify', () => {
       }
     };
 
-    const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
+    const queryResult = vm.query(mockEnv, verifyMsg);
+    expect((queryResult.json as any).error).not.toBeDefined();
+
+    const raw = wrapResult(queryResult).unwrap();
     const res = parseBase64Response(raw);
     expect(res).toEqual({
       verifies: false,
