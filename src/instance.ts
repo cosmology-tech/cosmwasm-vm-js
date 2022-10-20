@@ -2,6 +2,7 @@
 import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
+import {secp256k1Recover} from "@polkadot/util-crypto";
 import { IBackend, Record } from './backend';
 import { Env, MessageInfo } from 'types';
 import { toByteArray } from './helpers/byte-array';
@@ -367,11 +368,11 @@ export class VMInstance {
   }
 
   do_secp256k1_recover_pubkey(
-    hash: Region,
+    msgHash: Region,
     signature: Region,
     recover_param: number
   ): Uint8Array {
-    return ecdsaRecover(signature.data, recover_param, hash.data, false);
+    return secp256k1Recover(msgHash.data, signature.data, recover_param);
   }
 
   // Verifies a message against a signature with a public key, using the ed25519 EdDSA scheme.
@@ -493,7 +494,7 @@ function decodeSections(data: Uint8Array | number[]): (number[] | Uint8Array)[] 
   return result;
 }
 
-function fromBigEndianBytes(array: Uint8Array | number[]) {
+function fromBigEndianBytes(array: Uint8Array | number[]): number {
   let value = 0;
   for (let i = 0; i < array.length; i++) {
       value = (value * 256) + array[i];
