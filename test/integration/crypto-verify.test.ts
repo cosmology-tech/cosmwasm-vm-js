@@ -113,7 +113,7 @@ describe('crypto-verify', () => {
     }
   });
 
-  it.skip('ethereum_signature_verify_works', async () => {
+  it('ethereum_signature_verify_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const verify_msg = {
@@ -123,7 +123,6 @@ describe('crypto-verify', () => {
         signer_address: testData.ETHEREUM_SIGNER_ADDRESS,
       }
     };
-    console.log(testData.ETHEREUM_SIGNER_ADDRESS.length);
     const raw = vm.query(mockEnv, verify_msg);
     console.log(raw.json);
   });

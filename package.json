@@ -66,6 +66,7 @@
   "dependencies": {
     "@cosmjs/crypto": "^0.28.4",
     "@cosmjs/encoding": "^0.28.4",
+    "@polkadot/util-crypto": "^10.1.11",
     "@types/elliptic": "^6.4.14",
     "@types/secp256k1": "^4.0.3",
     "bech32": "^2.0.0",
@@ -75,8 +76,5 @@
     "secp256k1": "^4.0.3",
     "synchronized-promise": "^0.3.1",
     "util": "^0.12.4"
-  },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org"
   }
 }
