@@ -66,6 +66,7 @@
   "dependencies": {
     "@cosmjs/crypto": "^0.28.4",
     "@cosmjs/encoding": "^0.28.4",
+    "@polkadot/util": "^10.1.11",
     "@polkadot/util-crypto": "^10.1.11",
     "@types/elliptic": "^6.4.14",
     "@types/secp256k1": "^4.0.3",

@@ -2,7 +2,6 @@
 import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
-import {secp256k1Recover} from "@polkadot/util-crypto";
 import { IBackend, Record } from './backend';
 import { Env, MessageInfo } from 'types';
 import { toByteArray } from './helpers/byte-array';
@@ -57,13 +56,13 @@ export class VMInstance {
   }
 
   public allocate(size: number): Region {
-    let { allocate, memory } = this.exports;
+    let {allocate, memory} = this.exports;
     let regPtr = allocate(size);
     return new Region(memory, regPtr);
   }
 
   public deallocate(region: Region): void {
-    let { deallocate } = this.exports;
+    let {deallocate} = this.exports;
     deallocate(region.ptr);
   }
 
@@ -96,35 +95,35 @@ export class VMInstance {
   }
 
   public instantiate(env: Env, info: MessageInfo, msg: object): Region {
-    let { instantiate } = this.exports;
+    let {instantiate} = this.exports;
     let args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
     let result = instantiate(...args);
     return this.region(result);
   }
 
   public execute(env: Env, info: MessageInfo, msg: object): Region {
-    let { execute } = this.exports;
+    let {execute} = this.exports;
     let args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
     let result = execute(...args);
     return this.region(result);
   }
 
   public query(env: Env, msg: object): Region {
-    let { query } = this.exports;
+    let {query} = this.exports;
     let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = query(...args);
     return this.region(result);
   }
 
   public migrate(env: Env, msg: object): Region {
-    let { migrate } = this.exports;
+    let {migrate} = this.exports;
     let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = migrate(...args);
     return this.region(result);
   }
 
   public reply(env: Env, msg: object): Region {
-    let { reply } = this.exports;
+    let {reply} = this.exports;
     let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = reply(...args);
     return this.region(result);
@@ -175,9 +174,9 @@ export class VMInstance {
   }
 
   secp256k1_verify(
-    hash_ptr: number,
-    signature_ptr: number,
-    pubkey_ptr: number
+      hash_ptr: number,
+      signature_ptr: number,
+      pubkey_ptr: number
   ): number {
     let hash = this.region(hash_ptr);
     let signature = this.region(signature_ptr);
@@ -186,19 +185,19 @@ export class VMInstance {
   }
 
   secp256k1_recover_pubkey(
-    hash_ptr: number,
-    signature_ptr: number,
-    recover_param: number
+      hash_ptr: number,
+      signature_ptr: number,
+      recover_param: number
   ): BigInt {
     let hash = this.region(hash_ptr);
     let signature = this.region(signature_ptr);
-    return this.do_secp256k1_recover_pubkey(hash, signature, recover_param);
+    return BigInt(this.do_secp256k1_recover_pubkey(hash, signature, recover_param).ptr);
   }
 
   ed25519_verify(
-    message_ptr: number,
-    signature_ptr: number,
-    pubkey_ptr: number
+      message_ptr: number,
+      signature_ptr: number,
+      pubkey_ptr: number
   ): number {
     let message = this.region(message_ptr);
     let signature = this.region(signature_ptr);
@@ -207,9 +206,9 @@ export class VMInstance {
   }
 
   ed25519_batch_verify(
-    messages_ptr: number,
-    signatures_ptr: number,
-    public_keys_ptr: number
+      messages_ptr: number,
+      signatures_ptr: number,
+      public_keys_ptr: number
   ): number {
     let messages = this.region(messages_ptr);
     let signatures = this.region(signatures_ptr);
@@ -285,12 +284,12 @@ export class VMInstance {
     }
 
     return this.allocate_bytes(new Uint8Array(
-      [
-        ...record.key,
-        ...toByteArray(record.key.length, 4),
-        ...record.value,
-        ...toByteArray(record.value.length, 4)
-      ]));
+        [
+          ...record.key,
+          ...toByteArray(record.key.length, 4),
+          ...record.value,
+          ...toByteArray(record.value.length, 4)
+        ]));
   }
 
   do_addr_humanize(source: Region, destination: Region): Region {
@@ -330,7 +329,7 @@ export class VMInstance {
     }
 
     const canonical = this.bech32.fromWords(
-      this.bech32.decode(source.str).words
+        this.bech32.decode(source.str).words
     );
 
     if (canonical.length === 0) {
@@ -339,8 +338,8 @@ export class VMInstance {
 
     // TODO: Change prefix to be configurable per environment
     const human = this.bech32.encode(
-      this.PREFIX,
-      this.bech32.toWords(canonical)
+        this.PREFIX,
+        this.bech32.toWords(canonical)
     );
     if (human !== source.str) {
       throw new Error('Invalid address.');
@@ -352,12 +351,12 @@ export class VMInstance {
   // Returns 0 on verification success, 1 on verification failure
   do_secp256k1_verify(hash: Region, signature: Region, pubkey: Region): number {
     console.log(
-      `signature length: ${signature.str.length}, pubkey length: ${pubkey.str.length}, message length: ${hash.str.length}`
+        `signature length: ${signature.str.length}, pubkey length: ${pubkey.str.length}, message length: ${hash.str.length}`
     );
     const isValidSignature = ecdsaVerify(
-      signature.data,
-      hash.data,
-      pubkey.data
+        signature.data,
+        hash.data,
+        pubkey.data
     );
 
     if (isValidSignature) {
@@ -368,20 +367,20 @@ export class VMInstance {
   }
 
   do_secp256k1_recover_pubkey(
-    msgHash: Region,
-    signature: Region,
-    recover_param: number
-  ): BigInt {
-    const test = secp256k1Recover(msgHash.data, signature.data, recover_param);
-    return convertU8aToBigInt(test);
+      msgHash: Region,
+      signature: Region,
+      recover_param: number
+  ): Region {
+    const pub = ecdsaRecover(signature.data, recover_param, msgHash.data, false);
+    return this.allocate_bytes(pub);
   }
 
   // Verifies a message against a signature with a public key, using the ed25519 EdDSA scheme.
   // Returns 0 on verification success, 1 on verification failure
   do_ed25519_verify(
-    message: Region,
-    signature: Region,
-    pubkey: Region
+      message: Region,
+      signature: Region,
+      pubkey: Region
   ): number {
     const sig = Buffer.from(signature.data).toString('hex');
     const pub = Buffer.from(pubkey.data).toString('hex');
@@ -402,9 +401,9 @@ export class VMInstance {
   // using the ed25519 EdDSA scheme.
   // Returns 0 on verification success (all batches verify correctly), 1 on verification failure
   do_ed25519_batch_verify(
-    messages_ptr: Region,
-    signatures_ptr: Region,
-    public_keys_ptr: Region
+      messages_ptr: Region,
+      signatures_ptr: Region,
+      public_keys_ptr: Region
   ): number {
     let messages = decodeSections(messages_ptr.data);
     let signatures = decodeSections(signatures_ptr.data);
@@ -498,7 +497,7 @@ function decodeSections(data: Uint8Array | number[]): (number[] | Uint8Array)[] 
 function fromBigEndianBytes(array: Uint8Array | number[]): number {
   let value = 0;
   for (let i = 0; i < array.length; i++) {
-      value = (value * 256) + array[i];
+    value = (value * 256) + array[i];
   }
   return value;
 }
@@ -514,4 +513,34 @@ function convertU8aToBigInt(u8a: Uint8Array): BigInt {
     ret = (ret << bits) + bi
   }
   return ret
+}
+
+function method1(buf: Uint8Array): BigInt {
+  let bits = 8n
+  if (ArrayBuffer.isView(buf)) {
+    bits = BigInt(buf.BYTES_PER_ELEMENT * 8)
+  } else {
+    buf = new Uint8Array(buf)
+  }
+
+  let ret = 0n
+  for (const i of buf.values()) {
+    const bi = BigInt(i)
+    ret = (ret << bits) + bi
+  }
+  return ret
+}
+
+function method2(buf: Uint8Array): BigInt {
+  let view = new DataView(buf.buffer, 0);
+  return view.getBigUint64(0, true);
+}
+
+function method3(buf: Uint8Array): BigInt {
+  let arr = new Uint8Array(buf);
+  let result = BigInt(0);
+  for (let i = arr.length - 1; i >= 0; i--) {
+    result = result * BigInt(256) + BigInt(arr[i]);
+  }
+  return result;
 }

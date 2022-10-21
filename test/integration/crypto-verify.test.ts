@@ -2,13 +2,13 @@ import { readFileSync } from 'fs';
 import { VMInstance } from "../../src/instance";
 import { BasicBackendApi, BasicKVIterStorage, BasicQuerier, IBackend, } from '../../src/backend';
 import * as testData from '../common/test-data';
-import { expectResponseToBeOk, parseBase64Response, wrapResult } from "../common/test-vm";
+import { parseBase64Response, wrapResult } from "../common/test-vm";
 import { fromHex, toHex } from "@cosmjs/encoding";
 
 const wasmBytecode = readFileSync('testdata/v1.1/crypto_verify.wasm');
 
 const creator = 'creator';
-const mockContractAddr = 'cosmos2contract';
+const mockContractAddr = '0x12890D2cce102216644c59daE5baed380d84830c';
 
 const mockEnv = {
   block: {
@@ -123,11 +123,14 @@ describe('crypto-verify', () => {
         signer_address: testData.ETHEREUM_SIGNER_ADDRESS,
       }
     };
-    const raw = vm.query(mockEnv, verify_msg);
-    console.log(raw.json);
+    const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
+    const res = parseBase64Response(raw);
+    expect(res).toEqual({
+      verifies: true,
+    });
   });
 
-  it.skip('ethereum_signature_verify_fails_for_corrupted_message', async () => {
+  it('ethereum_signature_verify_fails_for_corrupted_message', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const message = testData.ETHEREUM_MESSAGE + '!';
@@ -138,11 +141,14 @@ describe('crypto-verify', () => {
         signer_address: testData.ETHEREUM_SIGNER_ADDRESS,
       }
     };
-    const raw = vm.query(mockEnv, verify_msg);
-    expectResponseToBeOk(raw);
+    const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
+    const res = parseBase64Response(raw);
+    expect(res).toEqual({
+      verifies: false,
+    });
   });
 
-  it.skip('ethereum_signature_verify_fails_for_corrupted_signature', async () => {
+  it('ethereum_signature_verify_fails_for_corrupted_signature', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     // Wrong signature
@@ -150,28 +156,34 @@ describe('crypto-verify', () => {
     signature[5] ^= 0x01;
     const verify_msg = {
       verify_ethereum_text: {
-        message: testData.ETHEREUM_MESSAGE,
+        message: convertStringToBase64(testData.ETHEREUM_MESSAGE),
         signature: convertHexToBase64(signature),
         signer_address: testData.ETHEREUM_SIGNER_ADDRESS,
       }
     };
-    const raw = vm.query(mockEnv, verify_msg);
-    expectResponseToBeOk(raw);
+    const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
+    const res = parseBase64Response(raw);
+    expect(res).toEqual({
+      verifies: false,
+    });
 
     // broken signature
     const signature2 = new Uint8Array(65).fill(0x1c);
     const verify_msg2 = {
       verify_ethereum_signature: {
-        message: testData.ETHEREUM_MESSAGE,
-        signature: signature2,
+        message: convertStringToBase64(testData.ETHEREUM_MESSAGE),
+        signature: convertHexToBase64(signature2),
         signer_address: testData.ETHEREUM_SIGNER_ADDRESS,
       }
     };
-    const raw2 = vm.query(mockEnv, verify_msg2);
-    expectResponseToBeOk(raw2);
+    const raw2 = wrapResult(vm.query(mockEnv, verify_msg2)).unwrap();
+    const res2 = parseBase64Response(raw2);
+    expect(res2).toEqual({
+      verifies: false,
+    });
   });
 
-  it.skip('verify_ethereum_transaction_works', async () => {
+  it('verify_ethereum_transaction_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
     const nonce = 225;
     const chain_id = 4;
@@ -201,8 +213,11 @@ describe('crypto-verify', () => {
       }
     };
 
-    const raw = vm.query(mockEnv, msg);
-    expectResponseToBeOk(raw);
+    const raw = wrapResult(vm.query(mockEnv, msg)).unwrap();
+    const res = parseBase64Response(raw);
+    expect(res).toEqual({
+      verifies: false,
+    });
   });
 
   it('tendermint_signature_verify_works', async () => {

@@ -1372,7 +1372,7 @@
     "ed2curve" "^0.3.0"
     "tweetnacl" "^1.0.3"
 
-"@polkadot/util@*", "@polkadot/util@10.1.11":
+"@polkadot/util@*", "@polkadot/util@^10.1.11", "@polkadot/util@10.1.11":
   "integrity" "sha512-6m51lw6g6ilqO/k4BQY7rD0lYM9NCnC4FiM7CEEUc7j8q86qxdcZ88zdNldkhNsTIQnfmCtkK3GRzZW6VYrbUw=="
   "resolved" "https://registry.npmjs.org/@polkadot/util/-/util-10.1.11.tgz"
   "version" "10.1.11"
