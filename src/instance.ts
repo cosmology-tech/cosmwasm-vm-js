@@ -5,7 +5,7 @@ import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import {secp256k1Recover} from "@polkadot/util-crypto";
 import { IBackend, Record } from './backend';
 import { Env, MessageInfo } from 'types';
-import { toByteArray } from './helpers/byte-array';
+import { toByteArray, toNumber } from './helpers/byte-array';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -478,7 +478,7 @@ function decodeSections(data: Uint8Array | number[]): (number[] | Uint8Array)[] 
   let remainingLen = data.length;
 
   while (remainingLen >= 4) {
-    const tailLen = fromBigEndianBytes([
+    const tailLen = toNumber([
       data[remainingLen - 4],
       data[remainingLen - 3],
       data[remainingLen - 2],
@@ -493,14 +493,6 @@ function decodeSections(data: Uint8Array | number[]): (number[] | Uint8Array)[] 
 
   result.reverse();
   return result;
-}
-
-function fromBigEndianBytes(array: Uint8Array | number[]): number {
-  let value = 0;
-  for (let i = 0; i < array.length; i++) {
-      value = (value * 256) + array[i];
-  }
-  return value;
 }
 
 function convertU8aToBigInt(u8a: Uint8Array): BigInt {

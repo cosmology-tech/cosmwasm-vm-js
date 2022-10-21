@@ -144,7 +144,7 @@ describe('queue', () => {
     expect(parseBase64OkResponse(sumResponse)).toEqual({ sum: 303 });
   });
 
-  it('query_list', () => {
+  it.only('query_list', () => {
     // Arrange
     vm.instantiate(mockEnv, mockInfo, {});
 
@@ -166,9 +166,9 @@ describe('queue', () => {
     expect(list.late).toStrictEqual([]);
 
     // ToDo: implement asserts from original rust test
-    // assert_eq!(ids.empty, Vec::<u32>::new());
-    // assert_eq!(ids.early, vec![0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f]);
-    // assert_eq!(ids.late, vec![0x20, 0x21, 0x22, 0x23, 0x24]);
+    // expect(list.empty).toStrictEqual([]);
+    // expect(list.early).toStrictEqual([0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f]);
+    // expect(list.late).toStrictEqual([0x20, 0x21, 0x22, 0x23, 0x24]);
   });
 
   it('query_open_iterators', async () => {
