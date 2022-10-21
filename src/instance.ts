@@ -188,7 +188,7 @@ export class VMInstance {
       hash_ptr: number,
       signature_ptr: number,
       recover_param: number
-  ): BigInt {
+  ): bigint {
     let hash = this.region(hash_ptr);
     let signature = this.region(signature_ptr);
     return BigInt(this.do_secp256k1_recover_pubkey(hash, signature, recover_param).ptr);

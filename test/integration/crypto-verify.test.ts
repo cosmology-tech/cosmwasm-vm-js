@@ -125,6 +125,7 @@ describe('crypto-verify', () => {
     };
     const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
     const res = parseBase64Response(raw);
+    // TODO: Still failing
     expect(res).toEqual({
       verifies: true,
     });
@@ -170,22 +171,22 @@ describe('crypto-verify', () => {
     // broken signature
     const signature2 = new Uint8Array(65).fill(0x1c);
     const verify_msg2 = {
-      verify_ethereum_signature: {
+      verify_ethereum_text: {
         message: convertStringToBase64(testData.ETHEREUM_MESSAGE),
         signature: convertHexToBase64(signature2),
         signer_address: testData.ETHEREUM_SIGNER_ADDRESS,
       }
     };
-    const raw2 = wrapResult(vm.query(mockEnv, verify_msg2)).unwrap();
-    const res2 = parseBase64Response(raw2);
-    expect(res2).toEqual({
-      verifies: false,
-    });
+    try {
+      vm.query(mockEnv, verify_msg2);
+    } catch (e: any) {
+      expect(e.message).toEqual('Public key could not be recover');
+    }
   });
 
   it('verify_ethereum_transaction_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
-    
+
     const nonce = 225;
     const chain_id = 4;
     const from = '0x0a65766695a712af41b5cfecaad217b1a11cb22a';
