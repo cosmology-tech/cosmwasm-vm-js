@@ -1,4 +1,4 @@
-import { toHex, fromHex } from '@cosmjs/encoding';
+import { fromHex } from '@cosmjs/encoding';
 
 /**
  * Compares two byte arrays using the same logic as strcmp()
@@ -21,9 +21,12 @@ import { toHex, fromHex } from '@cosmjs/encoding';
   return 0;
 }
 
-
-export function toNumber(byteArray: Uint8Array) {
-  return parseInt(toHex(byteArray));
+export function toNumber(bigEndianByteArray: Uint8Array | number[]) {
+  let value = 0;
+  for (let i = 0; i < bigEndianByteArray.length; i++) {
+      value = (value * 256) + bigEndianByteArray[i];
+  }
+  return value;
 }
 
 export function toByteArray(number: number, fixedLength?: number | undefined): Uint8Array {
