@@ -240,7 +240,7 @@ describe('crypto-verify', () => {
     });
   });
 
-  it.skip('tendermint_signature_verify_fails', async () => {
+  it('tendermint_signature_verify_fails', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     const message = testData.ED25519_MESSAGE_HEX;
