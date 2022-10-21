@@ -2,7 +2,6 @@
 import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
-import {secp256k1Recover} from "@polkadot/util-crypto";
 import { IBackend, Record } from './backend';
 import { Env, MessageInfo } from 'types';
 import { toByteArray, toNumber } from './helpers/byte-array';
@@ -189,10 +188,10 @@ export class VMInstance {
     hash_ptr: number,
     signature_ptr: number,
     recover_param: number
-  ): BigInt {
+  ): bigint {
     let hash = this.region(hash_ptr);
     let signature = this.region(signature_ptr);
-    return this.do_secp256k1_recover_pubkey(hash, signature, recover_param);
+    return BigInt(this.do_secp256k1_recover_pubkey(hash, signature, recover_param).ptr);
   }
 
   ed25519_verify(
@@ -371,9 +370,9 @@ export class VMInstance {
     msgHash: Region,
     signature: Region,
     recover_param: number
-  ): BigInt {
-    const test = secp256k1Recover(msgHash.data, signature.data, recover_param);
-    return convertU8aToBigInt(test);
+  ): Region {
+    const pub = ecdsaRecover(signature.data, recover_param, msgHash.data, false);
+    return this.allocate_bytes(pub);
   }
 
   // Verifies a message against a signature with a public key, using the ed25519 EdDSA scheme.
@@ -493,17 +492,4 @@ function decodeSections(data: Uint8Array | number[]): (number[] | Uint8Array)[] 
 
   result.reverse();
   return result;
-}
-
-function convertU8aToBigInt(u8a: Uint8Array): BigInt {
-  let bits = 8n;
-  if (ArrayBuffer.isView(u8a)) bits = BigInt(u8a.BYTES_PER_ELEMENT * 8)
-  else u8a = new Uint8Array(u8a)
-
-  let ret = 0n;
-  for (const i of (u8a as Buffer).values()) {
-    const bi = BigInt(i)
-    ret = (ret << bits) + bi
-  }
-  return ret
 }
