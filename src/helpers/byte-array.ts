@@ -1,4 +1,4 @@
-import { toHex, fromHex } from '@cosmjs/encoding';
+import { fromHex } from '@cosmjs/encoding';
 
 /**
  * Compares two byte arrays using the same logic as strcmp()
