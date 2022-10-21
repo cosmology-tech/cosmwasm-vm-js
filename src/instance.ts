@@ -4,7 +4,7 @@ import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
 import { Env, MessageInfo } from 'types';
-import { toByteArray } from './helpers/byte-array';
+import { toByteArray, toNumber } from './helpers/byte-array';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -477,7 +477,7 @@ function decodeSections(data: Uint8Array | number[]): (number[] | Uint8Array)[] 
   let remainingLen = data.length;
 
   while (remainingLen >= 4) {
-    const tailLen = fromBigEndianBytes([
+    const tailLen = toNumber([
       data[remainingLen - 4],
       data[remainingLen - 3],
       data[remainingLen - 2],
@@ -491,56 +491,5 @@ function decodeSections(data: Uint8Array | number[]): (number[] | Uint8Array)[] 
   }
 
   result.reverse();
-  return result;
-}
-
-function fromBigEndianBytes(array: Uint8Array | number[]): number {
-  let value = 0;
-  for (let i = 0; i < array.length; i++) {
-    value = (value * 256) + array[i];
-  }
-  return value;
-}
-
-function convertU8aToBigInt(u8a: Uint8Array): BigInt {
-  let bits = 8n;
-  if (ArrayBuffer.isView(u8a)) bits = BigInt(u8a.BYTES_PER_ELEMENT * 8)
-  else u8a = new Uint8Array(u8a)
-
-  let ret = 0n;
-  for (const i of (u8a as Buffer).values()) {
-    const bi = BigInt(i)
-    ret = (ret << bits) + bi
-  }
-  return ret
-}
-
-function method1(buf: Uint8Array): BigInt {
-  let bits = 8n
-  if (ArrayBuffer.isView(buf)) {
-    bits = BigInt(buf.BYTES_PER_ELEMENT * 8)
-  } else {
-    buf = new Uint8Array(buf)
-  }
-
-  let ret = 0n
-  for (const i of buf.values()) {
-    const bi = BigInt(i)
-    ret = (ret << bits) + bi
-  }
-  return ret
-}
-
-function method2(buf: Uint8Array): BigInt {
-  let view = new DataView(buf.buffer, 0);
-  return view.getBigUint64(0, true);
-}
-
-function method3(buf: Uint8Array): BigInt {
-  let arr = new Uint8Array(buf);
-  let result = BigInt(0);
-  for (let i = arr.length - 1; i >= 0; i--) {
-    result = result * BigInt(256) + BigInt(arr[i]);
-  }
   return result;
 }
