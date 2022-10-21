@@ -144,7 +144,7 @@ describe('queue', () => {
     expect(parseBase64OkResponse(sumResponse)).toEqual({ sum: 303 });
   });
 
-  it.only('query_list', () => {
+  it('query_list', () => {
     // Arrange
     vm.instantiate(mockEnv, mockInfo, {});
 
