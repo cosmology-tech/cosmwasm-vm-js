@@ -350,9 +350,6 @@ export class VMInstance {
   // Verifies message hashes against a signature with a public key, using the secp256k1 ECDSA parametrization.
   // Returns 0 on verification success, 1 on verification failure
   do_secp256k1_verify(hash: Region, signature: Region, pubkey: Region): number {
-    console.log(
-        `signature length: ${signature.str.length}, pubkey length: ${pubkey.str.length}, message length: ${hash.str.length}`
-    );
     const isValidSignature = ecdsaVerify(
         signature.data,
         hash.data,
