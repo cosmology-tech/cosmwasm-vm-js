@@ -115,10 +115,9 @@ describe('crypto-verify', () => {
 
   it('ethereum_signature_verify_works', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
-
     const verify_msg = {
       verify_ethereum_text: {
-        message: convertStringToBase64(testData.ETHEREUM_MESSAGE),
+        message: testData.ETHEREUM_MESSAGE,
         signature: convertHexToBase64(testData.ETHEREUM_SIGNATURE_HEX),
         signer_address: testData.ETHEREUM_SIGNER_ADDRESS,
       }
