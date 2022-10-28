@@ -3,7 +3,7 @@ import { bech32, BechLib } from 'bech32';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
-import { Env, MessageInfo } from 'types';
+import { Env, MessageInfo } from './types';
 import { toByteArray, toNumber } from './helpers/byte-array';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
