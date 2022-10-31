@@ -29,12 +29,12 @@ export class GasInfo implements IGasInfo {
 }
 
 export interface IBackendApi {
+  bech32_prefix: string;
   canonical_address(human: string): Uint8Array;
-
   human_address(canonical: Uint8Array): string;
 }
 
-export class BasicBackendApi implements BasicBackendApi {
+export class BasicBackendApi implements IBackendApi {
   // public GAS_COST_CANONICALIZE = 55;
   public CANONICAL_LENGTH = 54;
   public EXCESS_PADDING = 6;

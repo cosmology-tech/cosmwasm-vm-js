@@ -17,11 +17,17 @@ import {
 import { toAscii } from '@cosmjs/encoding';
 import { Env, MessageInfo } from '../../src/types';
 
+class MockQuerier extends BasicQuerier {
+  handleQuery(request: any): any {
+    return { amount: [{ denom: 'earth', amount: '1000' }] }
+  }
+}
+
 const wasmBytecode = readFileSync('testdata/v1.1/burner.wasm');
 const backend: IBackend = {
   backend_api: new BasicBackendApi('terra'),
   storage: new BasicKVIterStorage(),
-  querier: new BasicQuerier(),
+  querier: new MockQuerier(),
 };
 
 const creator = 'terra1337xewwfv3jdjuz8e0nea9vd8dpugc0k2dcyt3';

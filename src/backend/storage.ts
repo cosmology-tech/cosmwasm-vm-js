@@ -4,6 +4,7 @@ import Immutable from 'immutable';
 import { MAX_LENGTH_DB_KEY } from '../instance';
 
 export interface IStorage {
+  dict: Immutable.Map<string, string>;
   get(key: Uint8Array): Uint8Array | null;
 
   set(key: Uint8Array, value: Uint8Array): void;
@@ -71,8 +72,8 @@ export class BasicKVStorage implements IStorage {
 }
 
 export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
-  constructor(public iterators: Map<number, Iter> = new Map()) {
-    super();
+  constructor(public dict: Immutable.Map<string, string> = Immutable.Map(), public iterators: Map<number, Iter> = new Map()) {
+    super(dict);
   }
 
   all(iterator_id: Uint8Array): Array<Record> {
