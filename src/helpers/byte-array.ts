@@ -38,7 +38,7 @@ export function toByteArray(number: number, fixedLength?: number | undefined): U
   const bytesOriginal = fromHex(hex);
 
   if (!fixedLength) {
-    return bytesOriginal;
+    return new Uint8Array([...bytesOriginal]);
   }
 
   let bytesFixedLength = [...bytesOriginal];
