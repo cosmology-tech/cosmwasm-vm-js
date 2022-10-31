@@ -678,7 +678,7 @@ describe('do_secp256k1_recover_pubkey', () => {
       sigPtr,
       testData.RECOVER_PARAM
     );
-    expect(result).toEqual(testData.SECP256K1_PUBKEY_HEX);
+    expect(result.data).toEqual(testData.SECP256K1_PUBKEY_HEX);
   });
 });
 
