@@ -1,22 +1,57 @@
-name: Publish package to NPM
+name: Publish package to npm
+
 on:
-  workflow_dispatch: { }
   release:
-    types: [ created ]
+    types: [created]
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     permissions:
-      contents: read
-      packages: write
+      contents: write
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
       - uses: actions/setup-node@v3
+        name: Set up node
         with:
-          node-version: '14.x'
-          registry-url: 'https://registry.npmjs.org'
-          always-auth: true
-      - run: yarn
-      - run: yarn build && yarn publish
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org' # set up .npmrc file to publish to npm
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build
+        run: yarn build
+
+      - name: Publish
+        run: yarn publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Notify on success
+        if: success()
+        uses: slackapi/slack-github-action@v1.22.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        with:
+          payload: |
+            {
+              "text": ":ship: A new version of <https://www.npmjs.com/package/@terran-one/cosmwasm-vm-js|cosmwasm-vm-js> has been published."
+            }
+
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.22.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        with:
+          payload: |
+            {
+              "text": ":boom: Failed to publish <https://github.com/Terran-One/cosmwasm-vm-js/actions/workflows/publish.yaml|cosmwasm-vm-js>."
+            }
