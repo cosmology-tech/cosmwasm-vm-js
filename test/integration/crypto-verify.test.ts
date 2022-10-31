@@ -19,7 +19,7 @@ const mockEnv = {
   contract: {address: mockContractAddr}
 };
 
-const mockInfo: { sender: string, funds: { amount: string, denom: string }[] } = {
+const mockInfo = {
   sender: creator,
   funds: []
 };
@@ -124,7 +124,7 @@ describe('crypto-verify', () => {
     };
     const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
     const res = parseBase64Response(raw);
-    // TODO: Still failing
+
     expect(res).toEqual({
       verifies: true,
     });
@@ -242,7 +242,7 @@ describe('crypto-verify', () => {
   it('tendermint_signature_verify_fails', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
-    const message = testData.ED25519_MESSAGE_HEX;
+    const message = new Uint8Array([... testData.ED25519_MESSAGE_HEX]);
     message[0] ^= 0x01;
 
     const verify_msg = {

@@ -123,7 +123,7 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
     }
 
     let data: Record[] = [];
-    for (const key of this.dict.keys()) {
+    for (const key of Array.from(this.dict.keys()).sort()) {
       if (start?.length && compare(start, fromBase64(key)) === 1) continue;
       if (end?.length && compare(fromBase64(key), end) > -1) break;
 

@@ -148,11 +148,11 @@ describe('queue', () => {
     // Arrange
     vm.instantiate(mockEnv, mockInfo, {});
 
-    for (let i = 0; i < 3; i++) { // ToDo: iterate 37 (0x25) times (currently breaks when you do this)
+    for (let i = 0; i < 37; i++) {
       vm.execute(mockEnv, mockInfo, { enqueue: { value: 40 } });
     }
 
-    for (let i = 0; i < 2; i++) { // ToDo: iterate 25 (0x19) times (currently breaks when you do this)
+    for (let i = 0; i < 25; i++) {
       vm.execute(mockEnv, mockInfo, { dequeue: {} });
     }
 
@@ -160,15 +160,13 @@ describe('queue', () => {
     const listResponse = vm.query(mockEnv, { list: {} });
 
     // Assert
+    const countResponse = vm.query(mockEnv, { count: {} });
+    expect(parseBase64OkResponse(countResponse)).toEqual({ count: 12 });
+
     const list = parseBase64OkResponse(listResponse);
     expect(list.empty).toStrictEqual([]);
-    expect(list.early).toStrictEqual([1]);
-    expect(list.late).toStrictEqual([]);
-
-    // ToDo: implement asserts from original rust test
-    // expect(list.empty).toStrictEqual([]);
-    // expect(list.early).toStrictEqual([25, 26, 27, 28, 29, 30, 31]);
-    // expect(list.late).toStrictEqual([32, 33, 34, 35, 36]);
+    expect(list.early).toStrictEqual([25, 26, 27, 28, 29, 30, 31]);
+    expect(list.late).toStrictEqual([32, 33, 34, 35, 36]);
   });
 
   it('query_open_iterators', async () => {
