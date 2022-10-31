@@ -4,18 +4,39 @@ import {
   BasicBackendApi,
   BasicKVIterStorage,
   BasicQuerier,
-  IBackend,
 } from '../../src/backend';
 import { fromBase64 } from '@cosmjs/encoding';
 import { Region } from '../../src/memory';
 import { expectResponseToBeOk, parseBase64Response } from '../common/test-vm';
 
+type HackatomQueryRequest = {
+  bank: {
+    all_balances: {
+      address: string
+    }
+  }
+}
+class HackatomMockQuerier extends BasicQuerier {
+  private balances: Map<string, { amount: string, denom: string }[]> = new Map();
+
+  update_balance(addr: string, balance: { amount: string; denom: string; }[]): { amount: string; denom: string; }[] {
+    this.balances.set(addr, balance);
+    return balance;
+  }
+
+  handleQuery(queryRequest: HackatomQueryRequest): any {
+    if ('bank' in queryRequest) {
+      if ('all_balances' in queryRequest.bank) {
+        const { address } = queryRequest.bank.all_balances;
+        return { amount: this.balances.get(address) || [] }
+      }
+    }
+
+    throw new Error(`unknown query: ${JSON.stringify(queryRequest)}`);
+  }
+}
+
 const wasmBytecode = readFileSync('testdata/v1.1/hackatom.wasm');
-const backend: IBackend = {
-  backend_api: new BasicBackendApi('terra'),
-  storage: new BasicKVIterStorage(),
-  querier: new BasicQuerier(),
-};
 
 const verifier = 'terra1kzsrgcktshvqe9p089lqlkadscqwkezy79t8y9';
 const beneficiary = 'terra1zdpgj8am5nqqvht927k3etljyl6a52kwqup0je';
@@ -38,10 +59,18 @@ const mockInfo: { sender: string, funds: { amount: string, denom: string }[] } =
 
 let vm: VMInstance;
 describe('hackatom', () => {
+  let querier: HackatomMockQuerier;
+
   beforeEach(async () => {
-    vm = new VMInstance(backend);
+    querier = new HackatomMockQuerier();
+    vm = new VMInstance({
+      backend_api: new BasicBackendApi('terra'),
+      storage: new BasicKVIterStorage(),
+      querier
+    });
     await vm.build(wasmBytecode);
   });
+
 
   it('proper_initialization', async () => {
     // Act
@@ -93,7 +122,7 @@ describe('hackatom', () => {
     // Arrange
     const richAddress = 'foobar';
     const richBalance = [{ amount: '10000', denom: 'gold' }];
-    vm.backend.querier.update_balance(richAddress, richBalance);
+    querier.update_balance(richAddress, richBalance);
 
     vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
 
@@ -123,7 +152,7 @@ describe('hackatom', () => {
   it('execute_release_works', async () => {
     // Arrange
     vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
-    vm.backend.querier.update_balance(mockContractAddr, [{ amount: '1000', denom: 'earth' }]);
+    querier.update_balance(mockContractAddr, [{ amount: '1000', denom: 'earth' }]);
 
     // Act
     const execResponse = vm.execute(
@@ -149,7 +178,7 @@ describe('hackatom', () => {
   it('execute_release_fails_for_wrong_sender', async () => {
     // Arrange
     vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
-    vm.backend.querier.update_balance(mockContractAddr, [{ amount: '1000', denom: 'earth' }]);
+    querier.update_balance(mockContractAddr, [{ amount: '1000', denom: 'earth' }]);
 
     // Act
     const execResponse = vm.execute(
