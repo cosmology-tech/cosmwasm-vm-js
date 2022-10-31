@@ -11,6 +11,10 @@ export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
 export const MAX_LENGTH_CANONICAL_ADDRESS: number = 64;
 export const MAX_LENGTH_HUMAN_ADDRESS: number = 256;
 
+export const MAX_LENGTH_ED25519_SIGNATURE: number = 64;
+export const MAX_LENGTH_ED25519_MESSAGE: number = 128 * 1024;
+export const EDDSA_PUBKEY_LEN: number = 32;
+
 export class VMInstance {
   public instance?: WebAssembly.Instance;
   public bech32: BechLib;
@@ -378,6 +382,10 @@ export class VMInstance {
       signature: Region,
       pubkey: Region
   ): number {
+    if (message.length > MAX_LENGTH_ED25519_MESSAGE) return 1;
+    if (signature.length > MAX_LENGTH_ED25519_SIGNATURE) return 1;
+    if (pubkey.length > EDDSA_PUBKEY_LEN) return 1;
+
     const sig = Buffer.from(signature.data).toString('hex');
     const pub = Buffer.from(pubkey.data).toString('hex');
     const msg = Buffer.from(message.data).toString('hex');

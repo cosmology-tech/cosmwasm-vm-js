@@ -591,7 +591,7 @@ describe('do_ed25519_verify', () => {
     expect(result).toEqual(1);
   });
 
-  it.skip('fails for large sig', () => { // test is broken, only ever passed due to other tests mutating the test data
+  it('fails for large sig', () => {
     const sig = new Uint8Array([...testData.EDDSA_SIG_HEX, 0x00]);
     const hashPtr = writeData(vm, testData.EDDSA_MSG_HEX);
     const sigPtr = writeData(vm, sig);
