@@ -2,8 +2,10 @@ export interface IQuerier {
   query_raw(request: Uint8Array, gas_limit: number /* Uint64 */): Uint8Array;
 }
 
-export class BasicQuerier implements IQuerier {
-
+/** Basic implementation of `IQuerier` with standardized `query_raw`
+ * which delegates to a new, abstract `handleQuery` method.
+ */
+export abstract class QuerierBase implements IQuerier {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   query_raw(request: Uint8Array, gas_limit: number): Uint8Array {
     const queryRequest = parseQuery(request);
@@ -13,7 +15,13 @@ export class BasicQuerier implements IQuerier {
 
     return objectToUint8Array({ ok: { ok: objectToBase64(this.handleQuery(queryRequest)) }});
   }
+  
+  /** Handle a specific JSON query message. */
+  abstract handleQuery(queryRequest: any): any;
+}
 
+/** Basic implementation which does not actually implement `handleQuery`. Intended for testing. */
+export class BasicQuerier extends QuerierBase {
   handleQuery(queryRequest: any): any {
     throw new Error(`Unimplemented - subclass BasicQuerier and provide handleQuery() implementation.`)
   }
