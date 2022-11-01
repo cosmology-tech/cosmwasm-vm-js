@@ -22,13 +22,13 @@ jobs:
           registry-url: 'https://registry.npmjs.org' # set up .npmrc file to publish to npm
 
       - name: Install dependencies
-        run: yarn install
+        run: npm install
 
       - name: Build
-        run: yarn build
+        run: npm run build
 
       - name: Publish
-        run: yarn publish
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
