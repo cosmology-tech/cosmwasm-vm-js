@@ -27,3 +27,20 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.22.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        with:
+          payload: |
+            {
+              "attachments": [
+                {
+                  "text": ":boom: CI failed for <https://www.npmjs.com/package/@terran-one/cosmwasm-vm-js|cosmwasm-vm-js>",
+                  "color": "danger"
+                }
+              ]
+            }
