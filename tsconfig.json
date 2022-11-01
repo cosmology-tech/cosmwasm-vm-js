@@ -36,7 +36,7 @@
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
-    "target": "esnext",
+    "target": "es6",
     "paths": {
       "*": [
         "src/*"
