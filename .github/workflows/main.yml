@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node: ['14.x']
+        node: ['18.x']
         os: [ubuntu-latest]
 
     steps:
@@ -23,7 +23,24 @@ jobs:
         uses: bahmutov/npm-install@v1
 
       - name: Test
-        run: yarn test --ci --coverage --maxWorkers=2
+        run: npm test --ci --coverage --maxWorkers=2
 
       - name: Build
-        run: yarn build
+        run: npm run build
+
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.22.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        with:
+          payload: |
+            {
+              "attachments": [
+                {
+                  "text": ":boom: CI failed for <https://www.npmjs.com/package/@terran-one/cosmwasm-vm-js|cosmwasm-vm-js>",
+                  "color": "danger"
+                }
+              ]
+            }

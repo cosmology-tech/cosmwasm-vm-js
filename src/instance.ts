@@ -11,10 +11,14 @@ export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
 export const MAX_LENGTH_CANONICAL_ADDRESS: number = 64;
 export const MAX_LENGTH_HUMAN_ADDRESS: number = 256;
 
+export const MAX_LENGTH_ED25519_SIGNATURE: number = 64;
+export const MAX_LENGTH_ED25519_MESSAGE: number = 128 * 1024;
+export const EDDSA_PUBKEY_LEN: number = 32;
+
 export class VMInstance {
-  public PREFIX: string = 'terra';
   public instance?: WebAssembly.Instance;
   public bech32: BechLib;
+  public debugMsgs: string[] = [];
 
   constructor(public backend: IBackend, public readonly gasLimit?: number | undefined) {
     this.bech32 = bech32;
@@ -336,9 +340,8 @@ export class VMInstance {
       throw new Error('Invalid address.');
     }
 
-    // TODO: Change prefix to be configurable per environment
     const human = this.bech32.encode(
-        this.PREFIX,
+        this.backend.backend_api.bech32_prefix,
         this.bech32.toWords(canonical)
     );
     if (human !== source.str) {
@@ -379,6 +382,10 @@ export class VMInstance {
       signature: Region,
       pubkey: Region
   ): number {
+    if (message.length > MAX_LENGTH_ED25519_MESSAGE) return 1;
+    if (signature.length > MAX_LENGTH_ED25519_SIGNATURE) return 1;
+    if (pubkey.length > EDDSA_PUBKEY_LEN) return 1;
+
     const sig = Buffer.from(signature.data).toString('hex');
     const pub = Buffer.from(pubkey.data).toString('hex');
     const msg = Buffer.from(message.data).toString('hex');
@@ -453,7 +460,7 @@ export class VMInstance {
   }
 
   do_debug(message: Region) {
-    console.log(message.read_str());
+    this.debugMsgs.push(message.read_str());
   }
 
   do_query_chain(request: Region): Region {

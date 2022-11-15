@@ -19,7 +19,7 @@ const mockEnv = {
   contract: {address: mockContractAddr}
 };
 
-const mockInfo: { sender: string, funds: { amount: string, denom: string }[] } = {
+const mockInfo = {
   sender: creator,
   funds: []
 };
@@ -79,7 +79,7 @@ describe('crypto-verify', () => {
   it('cosmos_signature_verify_fails', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
-    const message = testData.SECP256K1_MESSAGE_HEX;
+    const message = new Uint8Array([... testData.SECP256K1_MESSAGE_HEX]);
     message[0] ^= 0x01;
     const verify_msg = {
       verify_cosmos_signature: {
@@ -124,7 +124,7 @@ describe('crypto-verify', () => {
     };
     const raw = wrapResult(vm.query(mockEnv, verify_msg)).unwrap();
     const res = parseBase64Response(raw);
-    // TODO: Still failing
+
     expect(res).toEqual({
       verifies: true,
     });
@@ -152,7 +152,7 @@ describe('crypto-verify', () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
     // Wrong signature
-    const signature = testData.ETHEREUM_SIGNATURE_HEX;
+    const signature = new Uint8Array([... testData.ETHEREUM_SIGNATURE_HEX]);
     signature[5] ^= 0x01;
     const verify_msg = {
       verify_ethereum_text: {
@@ -242,7 +242,7 @@ describe('crypto-verify', () => {
   it('tendermint_signature_verify_fails', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
 
-    const message = testData.ED25519_MESSAGE_HEX;
+    const message = new Uint8Array([... testData.ED25519_MESSAGE_HEX]);
     message[0] ^= 0x01;
 
     const verify_msg = {
@@ -369,8 +369,8 @@ describe('crypto-verify', () => {
   it('tendermint_signatures_batch_verify_fails', async () => {
     vm.instantiate(mockEnv, mockInfo, {});
     const messages = [
-      testData.ED25519_MESSAGE_HEX,
-      testData.ED25519_MESSAGE2_HEX,
+      new Uint8Array([... testData.ED25519_MESSAGE_HEX]),
+      new Uint8Array([... testData.ED25519_MESSAGE2_HEX]),
     ];
     messages[1][0] ^= 0x01;
 

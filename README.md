@@ -140,7 +140,7 @@ The following WASM imports have been implemented according to `imports.rs` in `c
 | `db_read`                  | :white_check_mark: | :white_check_mark: |                                              |
 | `db_write`                 | :white_check_mark: | :white_check_mark: |                                              |
 | `db_remove`                | :white_check_mark: | :white_check_mark: |                                              |
-| `db_scan`                  | :x:                | :x:                |                                              |
+| `db_scan`                  | :white_check_mark: | :white_check_mark: |                                              |
 | `db_next`                  | :white_check_mark: | :x:                |                                              |
 | `addr_humanize`            | :white_check_mark: | :white_check_mark: |                                              |
 | `addr_canonicalize`        | :white_check_mark: | :white_check_mark: |                                              |
@@ -149,8 +149,8 @@ The following WASM imports have been implemented according to `imports.rs` in `c
 | `secp256k1_recover_pubkey` | :white_check_mark: | :white_check_mark: |                                              |
 | `ed25519_verify`           | :white_check_mark: | :white_check_mark: |                                              |
 | `ed25519_batch_verify`     | :white_check_mark: | :white_check_mark: |                                              |
-| `debug`                    | :white_check_mark: | :x:                | Defers to user-supplied debug functionality. |
-| `query_chain`              | :x:                | :x:                |                                              |
+| `debug`                    | :white_check_mark: | :x:                | Appends to a list of strings instead of printing to console. |
+| `query_chain`              | :white_check_mark: | :x:                |                                              |
 | `abort`                    | :white_check_mark: | :x:                |                                              |
 
 ## Environment & Storage
