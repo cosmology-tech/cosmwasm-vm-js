@@ -20,7 +20,10 @@ export class VMInstance {
   public bech32: BechLib;
   public debugMsgs: string[] = [];
 
-  constructor(public backend: IBackend, public readonly gasLimit?: number | undefined) {
+  constructor(
+    public backend: IBackend,
+    public readonly gasLimit?: number | undefined
+  ) {
     this.bech32 = bech32;
   }
 
@@ -60,13 +63,13 @@ export class VMInstance {
   }
 
   public allocate(size: number): Region {
-    let {allocate, memory} = this.exports;
+    let { allocate, memory } = this.exports;
     let regPtr = allocate(size);
     return new Region(memory, regPtr);
   }
 
   public deallocate(region: Region): void {
-    let {deallocate} = this.exports;
+    let { deallocate } = this.exports;
     deallocate(region.ptr);
   }
 
@@ -93,41 +96,36 @@ export class VMInstance {
     return region;
   }
 
-  public allocate_none(): Region {
-    const none = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0]);
-    return this.allocate_bytes(none);
-  }
-
   public instantiate(env: Env, info: MessageInfo, msg: object): Region {
-    let {instantiate} = this.exports;
+    let { instantiate } = this.exports;
     let args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
     let result = instantiate(...args);
     return this.region(result);
   }
 
   public execute(env: Env, info: MessageInfo, msg: object): Region {
-    let {execute} = this.exports;
+    let { execute } = this.exports;
     let args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
     let result = execute(...args);
     return this.region(result);
   }
 
   public query(env: Env, msg: object): Region {
-    let {query} = this.exports;
+    let { query } = this.exports;
     let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = query(...args);
     return this.region(result);
   }
 
   public migrate(env: Env, msg: object): Region {
-    let {migrate} = this.exports;
+    let { migrate } = this.exports;
     let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = migrate(...args);
     return this.region(result);
   }
 
   public reply(env: Env, msg: object): Region {
-    let {reply} = this.exports;
+    let { reply } = this.exports;
     let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = reply(...args);
     return this.region(result);
@@ -178,9 +176,9 @@ export class VMInstance {
   }
 
   secp256k1_verify(
-      hash_ptr: number,
-      signature_ptr: number,
-      pubkey_ptr: number
+    hash_ptr: number,
+    signature_ptr: number,
+    pubkey_ptr: number
   ): number {
     let hash = this.region(hash_ptr);
     let signature = this.region(signature_ptr);
@@ -189,19 +187,21 @@ export class VMInstance {
   }
 
   secp256k1_recover_pubkey(
-      hash_ptr: number,
-      signature_ptr: number,
-      recover_param: number
+    hash_ptr: number,
+    signature_ptr: number,
+    recover_param: number
   ): bigint {
     let hash = this.region(hash_ptr);
     let signature = this.region(signature_ptr);
-    return BigInt(this.do_secp256k1_recover_pubkey(hash, signature, recover_param).ptr);
+    return BigInt(
+      this.do_secp256k1_recover_pubkey(hash, signature, recover_param).ptr
+    );
   }
 
   ed25519_verify(
-      message_ptr: number,
-      signature_ptr: number,
-      pubkey_ptr: number
+    message_ptr: number,
+    signature_ptr: number,
+    pubkey_ptr: number
   ): number {
     let message = this.region(message_ptr);
     let signature = this.region(signature_ptr);
@@ -210,9 +210,9 @@ export class VMInstance {
   }
 
   ed25519_batch_verify(
-      messages_ptr: number,
-      signatures_ptr: number,
-      public_keys_ptr: number
+    messages_ptr: number,
+    signatures_ptr: number,
+    public_keys_ptr: number
   ): number {
     let messages = this.region(messages_ptr);
     let signatures = this.region(signatures_ptr);
@@ -243,12 +243,14 @@ export class VMInstance {
     let value: Uint8Array | null = this.backend.storage.get(key.data);
 
     if (key.str.length > MAX_LENGTH_DB_KEY) {
-      throw new Error(`Key length ${key.str.length} exceeds maximum length ${MAX_LENGTH_DB_KEY}`);
+      throw new Error(
+        `Key length ${key.str.length} exceeds maximum length ${MAX_LENGTH_DB_KEY}`
+      );
     }
 
     if (value === null) {
       console.warn(`db_read: key not found: ${key.str}`);
-      return this.allocate_none();
+      return this.region(0);
     }
 
     return this.allocate_bytes(value);
@@ -272,7 +274,11 @@ export class VMInstance {
   }
 
   do_db_scan(start: Region, end: Region, order: number): Region {
-    const iteratorId: Uint8Array = this.backend.storage.scan(start.data, end.data, order);
+    const iteratorId: Uint8Array = this.backend.storage.scan(
+      start.data,
+      end.data,
+      order
+    );
 
     let region = this.allocate(iteratorId.length);
     region.write(iteratorId);
@@ -284,16 +290,17 @@ export class VMInstance {
     const record: Record | null = this.backend.storage.next(iterator_id.data);
 
     if (record === null) {
-      return this.allocate_none();
+      return this.allocate_bytes(Uint8Array.from([0, 0, 0, 0, 0, 0, 0, 0]));
     }
 
-    return this.allocate_bytes(new Uint8Array(
-        [
-          ...record.key,
-          ...toByteArray(record.key.length, 4),
-          ...record.value,
-          ...toByteArray(record.value.length, 4)
-        ]));
+    return this.allocate_bytes(
+      new Uint8Array([
+        ...record.key,
+        ...toByteArray(record.key.length, 4),
+        ...record.value,
+        ...toByteArray(record.value.length, 4),
+      ])
+    );
   }
 
   do_addr_humanize(source: Region, destination: Region): Region {
@@ -333,7 +340,7 @@ export class VMInstance {
     }
 
     const canonical = this.bech32.fromWords(
-        this.bech32.decode(source.str).words
+      this.bech32.decode(source.str).words
     );
 
     if (canonical.length === 0) {
@@ -341,8 +348,8 @@ export class VMInstance {
     }
 
     const human = this.bech32.encode(
-        this.backend.backend_api.bech32_prefix,
-        this.bech32.toWords(canonical)
+      this.backend.backend_api.bech32_prefix,
+      this.bech32.toWords(canonical)
     );
     if (human !== source.str) {
       throw new Error('Invalid address.');
@@ -354,9 +361,9 @@ export class VMInstance {
   // Returns 0 on verification success, 1 on verification failure
   do_secp256k1_verify(hash: Region, signature: Region, pubkey: Region): number {
     const isValidSignature = ecdsaVerify(
-        signature.data,
-        hash.data,
-        pubkey.data
+      signature.data,
+      hash.data,
+      pubkey.data
     );
 
     if (isValidSignature) {
@@ -367,20 +374,25 @@ export class VMInstance {
   }
 
   do_secp256k1_recover_pubkey(
-      msgHash: Region,
-      signature: Region,
-      recover_param: number
+    msgHash: Region,
+    signature: Region,
+    recover_param: number
   ): Region {
-    const pub = ecdsaRecover(signature.data, recover_param, msgHash.data, false);
+    const pub = ecdsaRecover(
+      signature.data,
+      recover_param,
+      msgHash.data,
+      false
+    );
     return this.allocate_bytes(pub);
   }
 
   // Verifies a message against a signature with a public key, using the ed25519 EdDSA scheme.
   // Returns 0 on verification success, 1 on verification failure
   do_ed25519_verify(
-      message: Region,
-      signature: Region,
-      pubkey: Region
+    message: Region,
+    signature: Region,
+    pubkey: Region
   ): number {
     if (message.length > MAX_LENGTH_ED25519_MESSAGE) return 1;
     if (signature.length > MAX_LENGTH_ED25519_SIGNATURE) return 1;
@@ -405,34 +417,50 @@ export class VMInstance {
   // using the ed25519 EdDSA scheme.
   // Returns 0 on verification success (all batches verify correctly), 1 on verification failure
   do_ed25519_batch_verify(
-      messages_ptr: Region,
-      signatures_ptr: Region,
-      public_keys_ptr: Region
+    messages_ptr: Region,
+    signatures_ptr: Region,
+    public_keys_ptr: Region
   ): number {
     let messages = decodeSections(messages_ptr.data);
     let signatures = decodeSections(signatures_ptr.data);
     let publicKeys = decodeSections(public_keys_ptr.data);
 
-    if (messages.length === signatures.length && messages.length === publicKeys.length) {
+    if (
+      messages.length === signatures.length &&
+      messages.length === publicKeys.length
+    ) {
       // Do nothing, we're good to go
-    } else if (messages.length === 1 && signatures.length == publicKeys.length) {
+    } else if (
+      messages.length === 1 &&
+      signatures.length == publicKeys.length
+    ) {
       const repeated = [];
       for (let i = 0; i < signatures.length; i++) {
         repeated.push(...messages);
       }
       messages = repeated;
-    } else if (publicKeys.length === 1 && messages.length == signatures.length) {
+    } else if (
+      publicKeys.length === 1 &&
+      messages.length == signatures.length
+    ) {
       const repeated = [];
       for (let i = 0; i < messages.length; i++) {
         repeated.push(...publicKeys);
       }
       publicKeys = repeated;
     } else {
-      throw new Error('Lengths of messages, signatures and public keys do not match.');
+      throw new Error(
+        'Lengths of messages, signatures and public keys do not match.'
+      );
     }
 
-    if (messages.length !== signatures.length || messages.length !== publicKeys.length) {
-      throw new Error('Lengths of messages, signatures and public keys do not match.');
+    if (
+      messages.length !== signatures.length ||
+      messages.length !== publicKeys.length
+    ) {
+      throw new Error(
+        'Lengths of messages, signatures and public keys do not match.'
+      );
     }
 
     for (let i = 0; i < messages.length; i++) {
@@ -476,7 +504,9 @@ export class VMInstance {
   }
 }
 
-function decodeSections(data: Uint8Array | number[]): (number[] | Uint8Array)[] {
+function decodeSections(
+  data: Uint8Array | number[]
+): (number[] | Uint8Array)[] {
   let result: (number[] | Uint8Array)[] = [];
   let remainingLen = data.length;
 
