@@ -8,8 +8,7 @@ toolchain, enabling new ways to instrument and test CosmWasm smart contracts.
 **NOTE:** This package is intended to work with contracts built for CosmWasm v1.0.
 
 **NOTE:** Although great care has been taken to match the behavior of the original CosmWasm VM (powered by Wasmer),
-this
-implementation may not provide identical results and should not be used as a drop-in replacement. Results obtained
+this implementation may not provide identical results and should not be used as a drop-in replacement. Results obtained
 should be verified against the original implementation for critical use-cases.
 
 ## Setup
@@ -17,7 +16,7 @@ should be verified against the original implementation for critical use-cases.
 Add the `cosmwasm-vm-js` package as a dependency in your `package.json`.
 
 ```sh
-npm install -S @terran-one/cosmwasm-vm
+npm install -S @terran-one/cosmwasm-vm-js
 ```
 
 or
@@ -109,7 +108,7 @@ describe('CosmWasmVM', () => {
 
 ## How it works
 
-CosmWasm smart contracts are WebAsssembly binaries that export certain function symbols called "entrypoints", such as
+CosmWasm smart contracts are WebAssembly binaries that export certain function symbols called "entrypoints", such as
 the following:
 
 - `instantiate`
@@ -141,7 +140,7 @@ The following WASM imports have been implemented according to `imports.rs` in `c
 | `db_write`                 | :white_check_mark: | :white_check_mark: |                                              |
 | `db_remove`                | :white_check_mark: | :white_check_mark: |                                              |
 | `db_scan`                  | :white_check_mark: | :white_check_mark: |                                              |
-| `db_next`                  | :white_check_mark: | :x:                |                                              |
+| `db_next`                  | :white_check_mark: | :white_check_mark: |                                              |
 | `addr_humanize`            | :white_check_mark: | :white_check_mark: |                                              |
 | `addr_canonicalize`        | :white_check_mark: | :white_check_mark: |                                              |
 | `addr_validate`            | :white_check_mark: | :white_check_mark: |                                              |
@@ -149,9 +148,9 @@ The following WASM imports have been implemented according to `imports.rs` in `c
 | `secp256k1_recover_pubkey` | :white_check_mark: | :white_check_mark: |                                              |
 | `ed25519_verify`           | :white_check_mark: | :white_check_mark: |                                              |
 | `ed25519_batch_verify`     | :white_check_mark: | :white_check_mark: |                                              |
-| `debug`                    | :white_check_mark: | :x:                | Appends to a list of strings instead of printing to console. |
-| `query_chain`              | :white_check_mark: | :x:                |                                              |
-| `abort`                    | :white_check_mark: | :x:                |                                              |
+| `debug`                    | :white_check_mark: | :white_check_mark: | Appends to a list of strings instead of printing to console. |
+| `query_chain`              | :white_check_mark: | :white_check_mark: |                                              |
+| `abort`                    | :white_check_mark: | :white_check_mark: |                                              |
 
 ## Environment & Storage
 
