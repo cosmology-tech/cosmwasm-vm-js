@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { readFileSync } from "fs";
 import { VMInstance } from '../src/instance';
 import {
   BasicBackendApi,
